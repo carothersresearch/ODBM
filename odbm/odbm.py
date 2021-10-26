@@ -2,10 +2,11 @@ from biocrnpyler import ChemicalReactionNetwork as CRN
 from typing import Dict, List, Tuple, Union
 import libsbml
 from warnings import warn
+import numpy as np
 
 class DCRN(CRN):
 
-    def simulate_with_roadrunner(self, timepoints: List[float], initial_condition_dict: Dict[str,float]=None, return_roadrunner=False, check_validity=True):
+    def simulate_with_roadrunner(self, timepoints: List[float], initial_condition_dict: Dict[str,float]=None, dynamic_condition_dict: Dict[str,float]=None, return_roadrunner=False, check_validity=True):
         """To simulate using roadrunner.
         Arguments:
         timepoints: The array of time points to run the simulation for.
@@ -33,8 +34,22 @@ class DCRN(CRN):
             if return_roadrunner:
                 return rr
             else:
-                result = rr.simulate(timepoints[0], timepoints[-1], len(timepoints))
-                res_ar = result
+                
+                flag = 0
+                t0 = timepoints[0]
+                for t in timepoints[1:]:
+
+                    for key, func in dynamic_condition_dict.items():
+                        rr.model[f'[{key}]'] = func(t0)
+
+                    if flag == 0:
+                        results = np.array(rr.simulate(t0, t))
+                        flag = 1
+                    else:
+                        results = np.concatenate([results, np.array(rr.simulate(t0, t))])
+                    t0 = t
+
+                res_ar = results
         except ModuleNotFoundError:
             warn('libroadrunner was not found, please install libroadrunner')
         return res_ar

@@ -4,7 +4,8 @@ echo " "
 echo "making 'ODBM' conda virtual environment..."
 conda create -n ODBM python=3.6
 conda activate ODBM
-pip install biocrnpyler[all]
+pip install biocrnpyler
+pip install libroadrunner
 echo " "
 
 echo "running tests"

@@ -3,7 +3,7 @@ echo " "
 
 echo "making 'ODBM' conda virtual environment..."
 conda create -n ODBM python=3.6
-conda activate ODBM
+activate ODBM
 pip install biocrnpyler
 pip install libroadrunner
 pip install pandas

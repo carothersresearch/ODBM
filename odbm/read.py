@@ -1,5 +1,5 @@
 import pandas as pd
-from biocrnpyler import Metabolite, Enzyme
+from biocrnpyler import Metabolite, Reaction, BasicCatalysis, Mixture, Species,HillPositive,ChemicalReactionNetwork
 
 def read_model_info(file):
     # TODO: check file is the right format
@@ -9,38 +9,45 @@ def read_model_info(file):
 
 
 def create_species_reactions(model_def:dict):
-    components = []
+
+    def myformat(x, find, replace):
+        for f,r in zip(find,replace):
+            x = x.replace(f,r)
+        x = x.strip()
+        x = x.upper()
+        if x[0].isnumeric():
+            x = 'z'+x 
+        return x
+    find = ['-',',','+',' ']
+    replace = ['_','_','_plus','']
+
     for sheet, df in model_def.items():
         if sheet == 'Species':
-            pass
+            species = {myformat(i,find,replace):Species(myformat(i,find,replace)) for i in df['Label']}
+            
         elif sheet == 'Reaction':
-            def myformat(x, F, R):
-                    for f,r in zip(F,R):
-                        x = x.replace(f,r)
-                    x = x.strip()
-                    x = x.upper()
-                    if x[0].isnumeric():
-                        x = 'z'+x 
-                    return x
-            F = ['-',',','+',' ']
-            R = ['_','_','_plus','']
+            reactions = []
 
             for i in range(len(df)):
+                enzyme = myformat(df.iloc[i]['Enzyme'],find,replace)
+                substrates = [*[myformat(x,find,replace) for x in df.iloc[i]['Reactant'].split(';')], enzyme]
+                products = [*[myformat(x,find,replace) for x in df.iloc[i]['Product'].split(';')], enzyme]
 
-                substrates = [myformat(x,F,R) for x in df.iloc[i]['Reactant'].split(';')]
-                products = [myformat(x,F,R) for x in df.iloc[i]['Product'].split(';')]
-                enzyme = df.iloc[i]['Enzyme'].strip().upper()
+                substrates = [species[x] for x in substrates]
+                products = [species[x] for x in products]
                 mechanism = df.iloc[i]['Mechanism']
 
-                E = Enzyme(enzyme, substrates, products, mechanisms = mechanism)
+                hill_neg  = HillPositive(k=1, s1=substrates[0], K=5, n=2) # just for testing
+                R = Reaction(substrates, products, propensity_type=hill_neg)
                 
-                components.append(E)
+                reactions.append(R)
 
             pass
         else:
             raise KeyError("Don't know how to handle "+sheet)
 
-    pass
+    return species, reactions
 
-lol = create_species_reactions(read_model_info('model_definition.xlsx'))
-print(lol)
+species, reactions = create_species_reactions(read_model_info('model_definition.xlsx'))
+CRN = ChemicalReactionNetwork(list(species.values()), reactions)
+CRN.pretty_print(show_rates = True, show_attributes = False, show_materials = True, show_keys = False)

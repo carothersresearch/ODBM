@@ -6,6 +6,9 @@ conda create -n ODBM python=3.6
 conda activate ODBM
 pip install biocrnpyler
 pip install libroadrunner
+pip install pandas
+pip install xlrd
+
 echo " "
 
 echo "running tests"

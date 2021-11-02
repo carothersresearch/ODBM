@@ -57,3 +57,27 @@ K1_R18=1.0;
 K1_R19=1.0; 
 K1_R20=1.0; 
 K1_R21=1.0; 
+K1_R22=10.0; 
+#Define reactions 
+Glycine + Shmt -> Serine + Shmt; K1_R1*Serine 
+Serine + Sda -> Pyruvic acid + NH3 + Sda; K1_R2*Pyruvic acid* NH3 
+Pyruvic acid + CO2 + ATP + PCX -> Oxaloacetic acid + ADP + PCX; K1_R3*Oxaloacetic acid* ADP 
+Oxaloacetic acid + NADH + Mdh -> Malic acid + NAD+ + Mdh; K1_R4*Malic acid* NAD+ 
+Formate + NAD+ + Fdh -> CO2 + NADH + Fdh; K1_R5*CO2* NADH 
+AMP + PPT -> ADP + PPT; K1_R6*ADP 
+ADP + PK -> ATP + PK; K1_R7*ATP 
+Fdh_DNA + RNAP -> Fdh_RNA + RNAP; K1_R8*Fdh_RNA 
+Shmt_DNA + RNAP -> Shmt_RNA + RNAP; K1_R9*Shmt_RNA 
+Sda_DNA + RNAP -> Sda_RNA + RNAP; K1_R10*Sda_RNA 
+PCX_DNA + RNAP -> PCX_RNA + RNAP; K1_R11*PCX_RNA 
+Mdh_DNA + RNAP -> Mdh_RNA + RNAP; K1_R12*Mdh_RNA 
+PPT_DNA + RNAP -> PPT_RNA + RNAP; K1_R13*PPT_RNA 
+PK_DNA + RNAP -> PK_RNA + RNAP; K1_R14*PK_RNA 
+Fdh_RNA + Ribosome -> Fdh + Ribosome; K1_R15*Fdh 
+Shmt_RNA + Ribosome -> Shmt + Ribosome; K1_R16*Shmt 
+Sda_RNA + Ribosome -> Sda + Ribosome; K1_R17*Sda 
+PCX_RNA + Ribosome -> PCX + Ribosome; K1_R18*PCX 
+Mdh_RNA + Ribosome -> Mdh + Ribosome; K1_R19*Mdh 
+PPT_RNA + Ribosome -> PPT + Ribosome; K1_R20*PPT 
+PK_RNA + Ribosome -> PK + Ribosome; K1_R21*PK 
+t1 + t2 -> t3 + t3; K1_R22*t3* t3 

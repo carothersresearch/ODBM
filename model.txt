@@ -1,83 +1,37 @@
 #Initialize concentrations 
-CO2=10.0; 
-Glycine=10.0; 
-Serine=2.0; 
-NH3=2.0; 
-Pyruvic acid=2.0; 
-Oxaloacetic acid=2.0; 
-Malic acid=2.0; 
-ATP=10.0; 
-AMP=1.0; 
-ADP=1.0; 
-NADH=10.0; 
-NAD+=1.0; 
-Fdh=2.0; 
-Shmt=2.0; 
-Sda=2.0; 
-PCX=2.0; 
-Mdh=2.0; 
-PPT=2.0; 
-PK=2.0; 
-Fdh_DNA=0.2; 
-Shmt_DNA=0.2; 
-Sda_DNA=0.2; 
-PCX_DNA=0.2; 
-Mdh_DNA=0.2; 
-PPT_DNA=0.2; 
-PK_DNA=0.2; 
-RNAP=6.0; 
-Ribosome=8.0; 
-Fdh_RNA=0.0; 
-Shmt_RNA=0.0; 
-Sda_RNA=0.0; 
-PCX_RNA=0.0; 
-Mdh_RNA=0.0; 
-PPT_RNA=0.0; 
-PK_RNA=0.0; 
+CO2=2; 
+FORMATE=2; 
+z10_CHO_THF=2; 
+z5_10_CH_THF=2; 
+z5_10_CH2_THF=2; 
+THF=2; 
+GLYCINE=2; 
+SERINE=2; 
+NH3=2; 
+PYRUVICACID=2; 
+OXALOACETICACID=2; 
+MALICACID=2; 
+ATP=2; 
+AMP=2; 
+ADP=2; 
+NADPH=2; 
+NADP_PLUS=2; 
+NADH=2; 
+NAD_PLUS=2; 
+FDH=2; 
+FDH_MUT=2; 
+FTL=2; 
+FCH=2; 
+MDT=2; 
+GCVHTP=2; 
+LPD=2; 
+SHMT=2; 
+SDA=2; 
+PCX=2; 
+MDH=2; 
+PPT=2; 
+PPT_DNA=2; 
+PPT_RNA=0; 
+PPT_AA=0; 
 
 #Initialize kinetic values 
-K1_R1=0.2; 
-K1_R2=1.0; 
-K1_R3=1.0; 
-K1_R4=1.0; 
-K1_R5=0.2; 
-K1_R6=0.2; 
-K1_R7=0.2; 
-K1_R8=3.0; 
-K1_R9=3.0; 
-K1_R10=3.0; 
-K1_R11=3.0; 
-K1_R12=3.0; 
-K1_R13=3.0; 
-K1_R14=3.0; 
-K1_R15=1.0; 
-K1_R16=1.0; 
-K1_R17=1.0; 
-K1_R18=1.0; 
-K1_R19=1.0; 
-K1_R20=1.0; 
-K1_R21=1.0; 
-K1_R22=10.0; 
-#Define reactions 
-Glycine + Shmt -> Serine + Shmt; K1_R1*Serine 
-Serine + Sda -> Pyruvic acid + NH3 + Sda; K1_R2*Pyruvic acid* NH3 
-Pyruvic acid + CO2 + ATP + PCX -> Oxaloacetic acid + ADP + PCX; K1_R3*Oxaloacetic acid* ADP 
-Oxaloacetic acid + NADH + Mdh -> Malic acid + NAD+ + Mdh; K1_R4*Malic acid* NAD+ 
-Formate + NAD+ + Fdh -> CO2 + NADH + Fdh; K1_R5*CO2* NADH 
-AMP + PPT -> ADP + PPT; K1_R6*ADP 
-ADP + PK -> ATP + PK; K1_R7*ATP 
-Fdh_DNA + RNAP -> Fdh_RNA + RNAP; K1_R8*Fdh_RNA 
-Shmt_DNA + RNAP -> Shmt_RNA + RNAP; K1_R9*Shmt_RNA 
-Sda_DNA + RNAP -> Sda_RNA + RNAP; K1_R10*Sda_RNA 
-PCX_DNA + RNAP -> PCX_RNA + RNAP; K1_R11*PCX_RNA 
-Mdh_DNA + RNAP -> Mdh_RNA + RNAP; K1_R12*Mdh_RNA 
-PPT_DNA + RNAP -> PPT_RNA + RNAP; K1_R13*PPT_RNA 
-PK_DNA + RNAP -> PK_RNA + RNAP; K1_R14*PK_RNA 
-Fdh_RNA + Ribosome -> Fdh + Ribosome; K1_R15*Fdh 
-Shmt_RNA + Ribosome -> Shmt + Ribosome; K1_R16*Shmt 
-Sda_RNA + Ribosome -> Sda + Ribosome; K1_R17*Sda 
-PCX_RNA + Ribosome -> PCX + Ribosome; K1_R18*PCX 
-Mdh_RNA + Ribosome -> Mdh + Ribosome; K1_R19*Mdh 
-PPT_RNA + Ribosome -> PPT + Ribosome; K1_R20*PPT 
-PK_RNA + Ribosome -> PK + Ribosome; K1_R21*PK 
-t1 + t2 -> t3 + t3; K1_R22*t3* t3 

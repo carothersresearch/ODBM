@@ -29,7 +29,6 @@ print("\nDirectly printing a CRN shows the string representation of the species 
 print("\nCRN.pretty_print(...) is a function that prints a more customizable version of the CRN, but doesn't show the proper string representation of species.")
 #print(CRN.pretty_print(show_materials = True, show_rates = True, show_attributes = True))
 
-
 try:
     import roadrunner
     x0 = {str(A):120}

@@ -69,7 +69,7 @@ def writeReactions(model_rxns):
                     if p[0].isnumeric():
                         p = p[1:]+'^'+p[0]
                     rxn_str += '*' + p 
-                rxn_str += ' \n'
+                rxn_str += '*'+fmt(rxn[1]['Enzyme']) + '; \n'
             else:
 
                 for r in rxn[1]['Reactant'].split(';'):

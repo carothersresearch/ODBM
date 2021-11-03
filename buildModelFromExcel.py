@@ -26,7 +26,7 @@ def initializeValues(model_species, model_rxns):
 
 #add support so either function can be called first - right now initializeValues must be called first, then writeReactions
 #maybe make a more intuitive way of having non 1:1 stoichiometries - right now if A -> 2B, excel wants B, B in "Product" column
-def writeReactions():
+def writeReactions(model_rxns):
     rxn_str = '\n #Define reactions \n'
     for rxn in model_rxns.iterrows():
         if rxn[1]['Mechanism'] == 'MA':

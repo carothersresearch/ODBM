@@ -38,7 +38,7 @@ def initializeValues(model_species, model_rxns):
 
     model_str += '\n# Initialize kinetic values \n'
     for _, rxn in model_rxns.iterrows():
-        for k in ['K1','K2','K3']:
+        for k in ['K1','K2','K3']: # may have more than 3
             if not pd.isnull(rxn[k]):
                 #initialize value
                 model_str += (k+'_'+rxn['Label'] +'=' + str(rxn[k]) + '; \n')
@@ -98,17 +98,42 @@ def writeReactions(model_rxns):
             N = rxn['Label'] # or ID
             E = rxn['Enzyme']
             if str(E) == 'nan':
-                raise NameError('No enzyme specified in Michaelis–Menten mechanism for reaction '+N)
+                raise NameError('No enzyme specified in reaction '+N)
 
             S = rxn['Reactant'].split(';')
             if len(S)>1:
                 raise NameError('More than one substrate specified in Michaelis–Menten mechanism for reaction '+N)
+
             S = S[0]
-            
-            P = ' + '.join(map(fmt, rxn['Product'].split(';')))
-            rxn_str += fmt(S) + ' + ' + fmt(E) + ' -> ' + fmt(E) + ' + '  + P + '; '
+            allP = ' + '.join(map(fmt, rxn['Product'].split(';')))
+
+            rxn_str += fmt(S) + ' + ' + fmt(E) + ' -> ' + fmt(E) + ' + '  + allP + '; '
             rxn_str += 'K1_' + N + '*'+fmt(E)+'*'+fmt(S)+'/('+'K2_' + N+' + '+fmt(S)+'); \n'
 
+        elif rxn['Mechanism'] == 'OBB':
+            # ordered bisubstrate-biproduct
+            # must have two substrates and two products
+            # https://iubmb.qmul.ac.uk/kinetics/ek4t6.html#p52
+
+            N = rxn['Label'] # or ID
+            E = rxn['Enzyme']
+            if str(E) == 'nan':
+                raise NameError('No enzyme specified in reaction '+N)
+
+            S = rxn['Reactant'].split(';')
+            if len(S) != 2:
+                raise NameError(str(len(S))+'substrate(s) found for a bisubstrate mechanism in reaction '+N)
+            
+            P = rxn['Product'].split(';')
+            if len(S) != 2:
+                raise NameError(str(len(P))+'product(s) found for a biproduct mechanism in reaction '+N)
+            
+            allS = ' + '.join(map(fmt, S))
+            allP = ' + '.join(map(fmt, P))
+
+            rxn_str += allS + ' + ' + fmt(E) + ' -> ' + fmt(E) + ' + '  + allP + '; '
+            rxn_str += 'K1_' + N + '*'+fmt(E)+'*'+fmt(S[0])+'*'+fmt(S[1])+'/(' \
+                         +fmt(S[0])+'*'+fmt(S[1])+'+ K2_' + N+'*'+fmt(S[0])+'+ K3_' + N+'*'+fmt(S[1])+'+ K4_' + N+'); \n'
 
     with open('model.txt', 'a') as f:
         f.write(rxn_str)

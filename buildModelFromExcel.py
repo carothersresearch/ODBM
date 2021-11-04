@@ -54,11 +54,11 @@ def initializeValues(model_species, model_rxns):
 def writeReactions(model_rxns):
     rxn_str = '\n# Define specified reactions \n'
 
-    fmt = lambda x: myformat(x, FIND, REPLACE)
+    fmt = lambda x: myformat(x, FIND, REPLACE) # bettter way of calling this all the time, maybe preprocess all string first?
     for _,rxn in model_rxns.iterrows():
         if rxn['Mechanism'] == 'MA':
+            # mass action kinetics
             if str(rxn['Enzyme']) != 'nan':
-                # mass action kinetics
 
                 for r in rxn['Reactant'].split(';'):
                     rxn_str += fmt(r) + ' + '
@@ -91,8 +91,24 @@ def writeReactions(model_rxns):
                     rxn_str += '*' + p 
                 rxn_str += ' \n'
 
-        elif rxn['Mechanism'] == 'MA2':
-            pass
+        elif rxn['Mechanism'] == 'MM':
+            # Michaelis–Menten kinetics
+            # must have only one substrate
+
+            N = rxn['Label'] # or ID
+            E = rxn['Enzyme']
+            if str(E) == 'nan':
+                raise NameError('No enzyme specified in Michaelis–Menten mechanism for reaction '+N)
+
+            S = rxn['Reactant'].split(';')
+            if len(S)>1:
+                raise NameError('More than one substrate specified in Michaelis–Menten mechanism for reaction '+N)
+            S = S[0]
+            
+            P = ' + '.join(map(fmt, rxn['Product'].split(';')))
+            rxn_str += fmt(S) + ' + ' + fmt(E) + ' -> ' + fmt(E) + ' + '  + P + '; '
+            rxn_str += 'K1_' + N + '*'+fmt(E)+'*'+fmt(S)+'/('+'K2_' + N+' + '+fmt(S)+'); \n'
+
 
     with open('model.txt', 'a') as f:
         f.write(rxn_str)

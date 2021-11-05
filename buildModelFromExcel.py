@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def myformat(x, find, replace):
     x = x.upper()
@@ -11,6 +12,14 @@ def myformat(x, find, replace):
 
 FIND = ['-',',','+',' ']
 REPLACE = ['_','_','_plus','']
+
+def str_2_dict(mystr):
+    mydict = {}
+    mystr = mystr.split(';')
+    for s in mystr:
+        k,v = s.split(':')
+        mydict[k.strip()] = v.strip()
+    return mydict
 
 #initializes model with starting concentrations for each species and kinetic values, writes to text file
 def initializeValues(model_species, model_rxns):
@@ -38,11 +47,13 @@ def initializeValues(model_species, model_rxns):
 
     model_str += '\n# Initialize kinetic values \n'
     for _, rxn in model_rxns.iterrows():
-        for k in ['K1','K2','K3']: # may have more than 3
-            if not pd.isnull(rxn[k]):
-                #initialize value
-                model_str += (k+'_'+rxn['Label'] +'=' + str(rxn[k]) + '; \n')
-
+        if not pd.isnull(rxn['Parameters']):
+            #initialize value
+            kdict = str_2_dict(rxn['Parameters'])
+            for key, value in kdict.items():
+                model_str += (key+'_'+rxn['Label'] +'=' + value + '; \n')
+        else:
+            raise('No parameteres found for reaction '+rxn['Label'])
             # Diego: what about default parameters? say if we want to set all transcription rates to be the same
 
 
@@ -94,46 +105,59 @@ def writeReactions(model_rxns):
         elif rxn['Mechanism'] == 'MM':
             # Michaelis–Menten kinetics
             # must have only one substrate
+            # looks for kcat and Km
 
+            
             N = rxn['Label'] # or ID
+
             E = rxn['Enzyme']
             if str(E) == 'nan':
-                raise NameError('No enzyme specified in reaction '+N)
+                raise KeyError('No enzyme specified in reaction '+N)
 
             S = rxn['Reactant'].split(';')
             if len(S)>1:
-                raise NameError('More than one substrate specified in Michaelis–Menten mechanism for reaction '+N)
+                raise ValueError('More than one substrate specified in Michaelis–Menten mechanism for reaction '+N)
+
+            params = ['kcat','Km']
+            if not np.all([p in str_2_dict(rxn['Parameters']) for p in params]):
+                raise KeyError("No "+' or '.join(params)+" found in parameters for reaction "+N)
 
             S = S[0]
             allP = ' + '.join(map(fmt, rxn['Product'].split(';')))
 
             rxn_str += fmt(S) + ' + ' + fmt(E) + ' -> ' + fmt(E) + ' + '  + allP + '; '
-            rxn_str += 'K1_' + N + '*'+fmt(E)+'*'+fmt(S)+'/('+'K2_' + N+' + '+fmt(S)+'); \n'
+            rxn_str += 'kcat_' + N + '*'+fmt(E)+'*'+fmt(S)+'/('+'Km_' + N+' + '+fmt(S)+'); \n'
 
         elif rxn['Mechanism'] == 'OBB':
             # ordered bisubstrate-biproduct
             # must have two substrates and two products
             # https://iubmb.qmul.ac.uk/kinetics/ek4t6.html#p52
+            # looks for kcat, Km1, Km2, K
 
             N = rxn['Label'] # or ID
+            
             E = rxn['Enzyme']
             if str(E) == 'nan':
-                raise NameError('No enzyme specified in reaction '+N)
+                raise KeyError('No enzyme specified in reaction '+N)
 
             S = rxn['Reactant'].split(';')
             if len(S) != 2:
-                raise NameError(str(len(S))+'substrate(s) found for a bisubstrate mechanism in reaction '+N)
+                raise ValueError(str(len(S))+'substrate(s) found for a bisubstrate mechanism in reaction '+N)
             
             P = rxn['Product'].split(';')
             if len(S) != 2:
-                raise NameError(str(len(P))+'product(s) found for a biproduct mechanism in reaction '+N)
-            
+                raise ValueError(str(len(P))+'product(s) found for a biproduct mechanism in reaction '+N)
+                
+            params = ['kcat', 'Km1', 'Km2', 'K']
+            if not np.all([p in str_2_dict(rxn['Parameters']) for p in params]):
+                raise KeyError("No "+' or '.join(params)+" found in parameters for reaction "+N) 
+
             allS = ' + '.join(map(fmt, S))
             allP = ' + '.join(map(fmt, P))
 
             rxn_str += allS + ' + ' + fmt(E) + ' -> ' + fmt(E) + ' + '  + allP + '; '
-            rxn_str += 'K1_' + N + '*'+fmt(E)+'*'+fmt(S[0])+'*'+fmt(S[1])+'/(' \
-                         +fmt(S[0])+'*'+fmt(S[1])+'+ K2_' + N+'*'+fmt(S[0])+'+ K3_' + N+'*'+fmt(S[1])+'+ K4_' + N+'); \n'
+            rxn_str += 'kcat_' + N + '*'+fmt(E)+'*'+fmt(S[0])+'*'+fmt(S[1])+'/(' \
+                         +fmt(S[0])+'*'+fmt(S[1])+'+ Km1_' + N+'*'+fmt(S[0])+'+ Km2_' + N+'*'+fmt(S[1])+'+ K_' + N+'); \n'
 
     with open('model.txt', 'a') as f:
         f.write(rxn_str)

@@ -13,3 +13,5 @@ model = open('model.txt','r').read()
 r  = te.loada(model)
 print(r)
 r.simulate(0,10)
+
+initializeValues

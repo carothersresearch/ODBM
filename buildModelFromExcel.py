@@ -63,6 +63,9 @@ def initializeValues(model_species, model_rxns):
 #add support so either function can be called first - right now initializeValues must be called first, then writeReactions
 
 def writeReactions(model_rxns):
+    """"
+    kjghlhjgjh
+    """
     rxn_str = '\n# Define specified reactions \n'
 
     fmt = lambda x: myformat(x, FIND, REPLACE) # bettter way of calling this all the time, maybe preprocess all string first?
@@ -163,4 +166,4 @@ def writeReactions(model_rxns):
         f.write(rxn_str)
     
 
-                
+            

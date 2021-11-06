@@ -70,11 +70,19 @@ def writeReactions(model_rxns):
 
     fmt = lambda x: myformat(x, FIND, REPLACE) # bettter way of calling this all the time, maybe preprocess all string first?
     for _,rxn in model_rxns.iterrows():
+
+        # cofactor
+        C = rxn['Cofactor']
+        if str(C) != 'nan':
+            C = C.split(';')
+        else:
+            C = []
+
         if rxn['Mechanism'] == 'MA':
             # mass action kinetics
             if str(rxn['Enzyme']) != 'nan':
 
-                for r in rxn['Reactant'].split(';'):
+                for r in rxn['Substrate'].split(';'):
                     rxn_str += fmt(r) + ' + '
                 rxn_str += fmt(rxn['Enzyme']) + ' -> '
                 for p in rxn['Product'].split(';'):
@@ -82,7 +90,7 @@ def writeReactions(model_rxns):
                 rxn_str += fmt(rxn['Enzyme']) + '; '
 
                 rxn_str += 'K1_' + rxn['Label']
-                for p in rxn['Reactant'].split(';'):
+                for p in rxn['Substrate'].split(';'):
                     p = fmt(p)
                     if p[0].isnumeric():
                         p = p[1:]+'^'+p[0]
@@ -90,7 +98,7 @@ def writeReactions(model_rxns):
                 rxn_str += '*'+fmt(rxn['Enzyme']) + '; \n'
             else:
 
-                for r in rxn['Reactant'].split(';'):
+                for r in rxn['Substrate'].split(';'):
                     rxn_str += fmt(r) + ' + '
                 rxn_str = rxn_str[:-3] + ' -> '
                 for p in rxn['Product'].split(';'):
@@ -98,7 +106,7 @@ def writeReactions(model_rxns):
                 rxn_str = rxn_str[:-3] + '; '
 
                 rxn_str += 'K1_' + rxn['Label']
-                for p in rxn['Reactant'].split(';'):
+                for p in rxn['Substrate'].split(';'):
                     p = fmt(p)
                     if p[0].isnumeric():
                         p = p[1:]+'^'+p[0]
@@ -117,7 +125,7 @@ def writeReactions(model_rxns):
             if str(E) == 'nan':
                 raise KeyError('No enzyme specified in reaction '+N)
 
-            S = rxn['Reactant'].split(';')
+            S = rxn['Substrate'].split(';')
             if len(S)>1:
                 raise ValueError('More than one substrate specified in Michaelis–Menten mechanism for reaction '+N)
 
@@ -125,11 +133,11 @@ def writeReactions(model_rxns):
             if not np.all([p in str_2_dict(rxn['Parameters']) for p in params]):
                 raise KeyError("No "+' or '.join(params)+" found in parameters for reaction "+N)
 
-            S = S[0]
+            allS = ' + '.join(map(fmt, [*S,*C]))
             allP = ' + '.join(map(fmt, rxn['Product'].split(';')))
 
-            rxn_str += fmt(S) + ' + ' + fmt(E) + ' -> ' + fmt(E) + ' + '  + allP + '; '
-            rxn_str += 'kcat_' + N + '*'+fmt(E)+'*'+fmt(S)+'/('+'Km_' + N+' + '+fmt(S)+'); \n'
+            rxn_str += fmt(allS) + ' + ' + fmt(E) + ' -> ' + fmt(E) + ' + '  + allP + '; '
+            rxn_str += 'kcat_' + N + '*'+fmt(E)+'*'+fmt(*S)+'/('+'Km_' + N+' + '+fmt(*S)+'); \n'
 
         elif rxn['Mechanism'] == 'OBB':
             # ordered bisubstrate-biproduct
@@ -143,10 +151,10 @@ def writeReactions(model_rxns):
             if str(E) == 'nan':
                 raise KeyError('No enzyme specified in reaction '+N)
 
-            S = rxn['Reactant'].split(';')
+            S = rxn['Substrate'].split(';')
             if len(S) != 2:
                 raise ValueError(str(len(S))+'substrate(s) found for a bisubstrate mechanism in reaction '+N)
-            
+
             P = rxn['Product'].split(';')
             if len(S) != 2:
                 raise ValueError(str(len(P))+'product(s) found for a biproduct mechanism in reaction '+N)
@@ -155,7 +163,7 @@ def writeReactions(model_rxns):
             if not np.all([p in str_2_dict(rxn['Parameters']) for p in params]):
                 raise KeyError("No "+' or '.join(params)+" found in parameters for reaction "+N) 
 
-            allS = ' + '.join(map(fmt, S))
+            allS = ' + '.join(map(fmt, [*S,*C]))
             allP = ' + '.join(map(fmt, P))
 
             rxn_str += allS + ' + ' + fmt(E) + ' -> ' + fmt(E) + ' + '  + allP + '; '

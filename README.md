@@ -14,11 +14,31 @@
   * Easily compare different gene isoforms, starting conditions, or time and amount of process control 
 
 
-## Example
+## Example: Defining Models from Excel
 
-1. Define model in Excel
 ![excel_species](/static/excel_species_ex.png)
-![excel_rxn](/static/excel_rxn_ex.png)
+Every species must have a **Label, Type, and Starting Conc**. 
+  * Label can contain any characters and will be processed by ODBM to be compatible with Tellurium. 
+  * Accepted Types include DNA, RNA, Enzyme, Cofactor
 
-* Screenshot of text file output with Tellurium model
-* Plots of simulation
+
+*TO-DO: Users can create own type?
+ 
+ 
+![excel_rxn](/static/excel_rxn_ex.png)
+Define chemical reactions with a **Label, Mechanism, Substrate, Product, and Parameters**. Enzyme and Cofactor are optional.
+  * Accepted Mechanisms are Michaelis-Menten ("MM"), Mass Action ("MA"), Ordered Bi-Bi substrate ("OBB"), and Product-Inhibition ("PI").
+    * Mechanisms are defined as classes and users can create custom mechanisms by defining a new class in *mechanisms.py*
+    * Users do NOT need to define every step of the process if their input is DNA. e.g., do not need to write a reaction for
+      DNA + RNAP --> RNAP + RNA
+      RNA + Ribosome --> AA + Ribosome
+    * ODBM will handle these cases automatically.
+
+ *TO-DO: Can PI be mono or bi-substrate? Do these require different mechanisms?
+ *TO-DO: Need to figure out how we handle transcription/translation. Are RNAP and Ribosome fixed species?
+
+![model_txt](/static/model_txt_ex.png)
+* ODBM will output an easy-to-read string that is Tellurium compatible and SBML compliant. From here, users can simulate their model using roadrunner.
+
+*TO-DO: 
+* add plots of simulation

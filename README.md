@@ -15,7 +15,10 @@
 
 
 ## Example
-To-do: Add example
-* Screenshot of excel sheet
+
+1. Define model in Excel
+![excel_species](/static/excel_species_ex.png)
+![excel_rxn](/static/excel_rxn_ex.png)
+
 * Screenshot of text file output with Tellurium model
 * Plots of simulation

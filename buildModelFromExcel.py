@@ -26,6 +26,7 @@ def str_2_dict(mystr):
 def extractParams(params):
     #split key/dict pairs by semicolon and key/dict by colon
     #return dict
+    return []
 
 #initializes model with starting concentrations for each species and kinetic values, writes to text file
 def initializeValues(model_species, model_rxns):
@@ -63,7 +64,7 @@ def initializeValues(model_species, model_rxns):
             # Diego: what about default parameters? say if we want to set all transcription rates to be the same
 
 
-    with open('model.txt', 'w') as f:
+    with open('model_simple_ex.txt', 'w') as f:
         f.write(model_str)
 
 #add support so either function can be called first - right now initializeValues must be called first, then writeReactions
@@ -183,7 +184,7 @@ def writeReactions(model_rxns):
             rxn_str += 'kcat_' + N + '*'+fmt(E)+'*'+fmt(S[0])+'*'+fmt(S[1])+'/(' \
                          +fmt(S[0])+'*'+fmt(S[1])+'+ Km1_' + N+'*'+fmt(S[0])+'+ Km2_' + N+'*'+fmt(S[1])+'+ K_' + N+'); \n'
 
-    with open('model.txt', 'a') as f:
+    with open('model_simple_ex.txt', 'a') as f:
         f.write(rxn_str)
     
 

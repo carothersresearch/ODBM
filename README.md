@@ -12,3 +12,10 @@
   * Mechanistic model for the central dogma
   * Dynamic process control (such as optogenetics) implementation into a model
   * Easily compare different gene isoforms, starting conditions, or time and amount of process control 
+
+
+## Example
+To-do: Add example
+* Screenshot of excel sheet
+* Screenshot of text file output with Tellurium model
+* Plots of simulation

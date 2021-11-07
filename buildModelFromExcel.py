@@ -1,7 +1,18 @@
 import pandas as pd
 import numpy as np
 
-def myformat(x, find, replace):
+def formatSpecies(x, find, replace):
+    """
+    Processes strings to make compliant with Tellurium model. 
+    Input:
+        1. x (str) string to process
+        2. Find (list of str) characters to remove
+        3. Replace (list of str) characters to replace characters in “Find” with. Must have same length as Find.
+
+    Returns:
+        1. x (str) processed string
+    """
+
     x = x.upper()
     if x[0].isnumeric() and x[1] != ' ':
         x = 'z'+x 
@@ -14,6 +25,14 @@ FIND = ['-',',','+',' ']
 REPLACE = ['_','_','_plus','']
 
 def extractParams(param_str):
+    """
+    Extracts parameters into a dict from string.
+    Input:
+        1. param_str (str) string of parameters in format “k1:10;k2:20” 
+
+    Returns:
+        2. mydict (dict) with format {k1: 10, k2:20}
+    """
     mydict = {}
     mystr = param_str.split(';')
     for s in mystr:
@@ -25,13 +44,21 @@ def extractParams(param_str):
 
 #initializes model with starting concentrations for each species and kinetic values, writes to text file
 def initializeValues(model_species, model_rxns):
+    """
+    Initializes model with kinetic values and starting concentrations for each species. Writes a txt file with initialize values to be read in by Tellurium.
+
+    Input:
+        1. model_species (dataframe) with columns “Label, Type, Starting Conc”
+        2. model_rxn (dataframe) with columns “Label, Enzyme, Mechanism, Substrate, Cofactor, Product, Parameters”
+
+    """
 
     model_str = '# Initialize concentrations \n'
     auto_rxn_str = '\n# Define auto-generated reactions \n'
     auto_rxn_count = 0
 
     for _, sp in model_species.iterrows():
-        label = myformat(sp['Label'], FIND, REPLACE)
+        label = formatSpecies(sp['Label'], FIND, REPLACE)
         sp['Label'] = label
         
         model_str += (label +'=' + str(sp['Starting Conc']) + '; \n')
@@ -55,7 +82,7 @@ def initializeValues(model_species, model_rxns):
             for key, value in kdict.items():
                 model_str += (key+'_'+rxn['Label'] +'=' + value + '; \n')
         else:
-            raise('No parameteres found for reaction '+rxn['Label'])
+            raise('No parameters found for reaction '+rxn['Label'])
             # Diego: what about default parameters? say if we want to set all transcription rates to be the same
 
 
@@ -70,7 +97,7 @@ def writeReactions(model_rxns):
     """
     rxn_str = '\n# Define specified reactions \n'
 
-    fmt = lambda x: myformat(x, FIND, REPLACE) # bettter way of calling this all the time, maybe preprocess all string first?
+    fmt = lambda x: formatSpecies(x, FIND, REPLACE) # bettter way of calling this all the time, maybe preprocess all string first?
     for _,rxn in model_rxns.iterrows():
 
         # cofactor

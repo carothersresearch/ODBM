@@ -12,9 +12,18 @@ class Mechanism:
         self.params = params
     
     def handleCofactor(cofactor):
+        """
+        Facilitates including cofactors (ATP, NADH, etc.) into chemical reaction equation 
+        Input:
+            1. cofactor (str) with cofactor label
+
+        Returns:
+            2. C (list) of [substrate, product] for cofactor, e.g. [ATP, ADP] or [NADH, NAD_plus]
+        """
         # only handles common cofactors (ATP, NADH) and not very well
         # The idea I'm going for is we read in the cofactor 
         # and can return the substrate/product form to be used for writing the equation
+        C = []
         if cofactor == 'ATP':
             C = ['ATP','ADP']
         elif cofactor == 'NADH':
@@ -23,20 +32,33 @@ class Mechanism:
 
 
     rxn_str = '\n# Define specified reactions \n'
-    def writeEquation(product, reactant, enzyme, cofactor):
+    def writeEquation(N, P, S, E, C):
         '''
+        Writes chemical equations in form of A → B for all reactions defined in dataframe
+        Input:
+            1. N (str) of Label
+            2. P (list) of Products
+            3. S (list) of Substrates
+            4. E (str) of Enzyme
+            5. C (str) of Cofactor
+
+        Returns:
+            1. rxn_str (str) of reaction definitions
+
         Need to fix handling of cofactors here
         They are not involved in rate but should still be balanced in equation
         e.g. I don't want to have to write ATP in substrate and ADP in product 
         but I still need it in equation definition
         '''
+        
         #N = rxn['Label'] # or ID
         #E = rxn['Enzyme']
         #S = rxn['Substrate'].split(';')
         #P = rxn['Product'].split(';')
         #C = handleCofactor(cofactor)
 
-        if enzyme != 'nan':
+        '''
+        if E != 'nan':
             for r in reactant.split(';'):
                 rxn_str += fmt(r) + ' + '
             rxn_str += fmt(enzyme) + ' -> '
@@ -50,7 +72,7 @@ class Mechanism:
             for p in rxn['Product'].split(';'):
                 rxn_str += fmt(p) + ' + '
             rxn_str = rxn_str[:-3] + '; '
-
+        '''
 
         '''
         allS = ' + '.join(map(fmt, [*S,*C[0]]))
@@ -61,6 +83,7 @@ class Mechanism:
             rxn_str += fmt(allS) + ' -> ' allP + '; '
 
         '''
+        return rxn_str
 
     #how to call custom mechanism?
         # mech = str(type)
@@ -86,9 +109,9 @@ class MM(Mechanism):
         if len(S)>1:
             raise ValueError('More than one substrate specified in Michaelis–Menten mechanism for reaction '+N)
 
-        params = ['kcat','Km']
-        if not np.all([p in extractParams(rxn['Parameters']) for p in params]):
-            raise KeyError("No "+' or '.join(params)+" found in parameters for reaction "+N)
+        param_check = ['kcat','Km']
+        if not np.all([p in extractParams(params) for p in param_check]):
+            raise KeyError("No "+' or '.join(param_check)+" found in parameters for reaction "+N)
 
         # Want to have general function that writes the equation and use this to write the rate
         #writeEquation(product, reactant, enzyme, cofactor)
@@ -112,9 +135,9 @@ class OBB(Mechanism):
     if len(P) != 2:
         raise ValueError(str(len(P))+'product(s) found for a biproduct mechanism in reaction '+N)
         
-    params = ['kcat', 'Km1', 'Km2', 'K']
-    if not np.all([p in p for p in params]):
-        raise KeyError("No "+' or '.join(params)+" found in parameters for reaction "+N) 
+    param_check = ['kcat', 'Km1', 'Km2', 'K']
+    if not np.all([p in extractParams(params) for p in param_check]):
+        raise KeyError("No "+' or '.join(param_check)+" found in parameters for reaction "+N) 
 
     # Want to have general function that writes the equation and use this to write the rate
     #writeEquation(product, reactant, enzyme, cofactor)

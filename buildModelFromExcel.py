@@ -13,20 +13,15 @@ def myformat(x, find, replace):
 FIND = ['-',',','+',' ']
 REPLACE = ['_','_','_plus','']
 
-def str_2_dict(mystr):
+def extractParams(param_str):
     mydict = {}
-    mystr = mystr.split(';')
+    mystr = param_str.split(';')
     for s in mystr:
         k,v = s.split(':')
         mydict[k.strip()] = v.strip()
     return mydict
 
 
-###Ryan: to write
-def extractParams(params):
-    #split key/dict pairs by semicolon and key/dict by colon
-    #return dict
-    return []
 
 #initializes model with starting concentrations for each species and kinetic values, writes to text file
 def initializeValues(model_species, model_rxns):
@@ -56,7 +51,7 @@ def initializeValues(model_species, model_rxns):
     for _, rxn in model_rxns.iterrows():
         if not pd.isnull(rxn['Parameters']):
             #initialize value
-            kdict = str_2_dict(rxn['Parameters'])
+            kdict = extractParams(rxn['Parameters'])
             for key, value in kdict.items():
                 model_str += (key+'_'+rxn['Label'] +'=' + value + '; \n')
         else:
@@ -88,7 +83,7 @@ def writeReactions(model_rxns):
         params = extractParams(rxn['Parameters'])
         ### Ryan: added code here to try to create mechanism object, not sure if this right 
         #mechanism = Mechanism(type = rxn['Mechanism'], reactant = rxn['Substrate'], 
-         #           enzyme = rxn['Enzyme'], product = rxn['Product'], params = params)
+         #           enzyme = rxn['Enzyme'], product = rxn['Product'], cofactor = C, params = params)
          # call mechanism.WriteEquation()
        
        
@@ -144,7 +139,7 @@ def writeReactions(model_rxns):
                 raise ValueError('More than one substrate specified in Michaelis–Menten mechanism for reaction '+N)
 
             params = ['kcat','Km']
-            if not np.all([p in str_2_dict(rxn['Parameters']) for p in params]):
+            if not np.all([p in extractParams(rxn['Parameters']) for p in params]):
                 raise KeyError("No "+' or '.join(params)+" found in parameters for reaction "+N)
 
             allS = ' + '.join(map(fmt, [*S,*C]))
@@ -174,7 +169,7 @@ def writeReactions(model_rxns):
                 raise ValueError(str(len(P))+'product(s) found for a biproduct mechanism in reaction '+N)
                 
             params = ['kcat', 'Km1', 'Km2', 'K']
-            if not np.all([p in str_2_dict(rxn['Parameters']) for p in params]):
+            if not np.all([p in extractParams(rxn['Parameters']) for p in params]):
                 raise KeyError("No "+' or '.join(params)+" found in parameters for reaction "+N) 
 
             allS = ' + '.join(map(fmt, [*S,*C]))

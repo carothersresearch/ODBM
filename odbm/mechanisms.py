@@ -1,16 +1,58 @@
+from numpy.core.fromnumeric import product
 import pandas as pd
 import numpy as np
+from odbm.utils import extractParams, fmt
 
 class Mechanism:
 
-    def __init__(self, type, reactant,enzyme, product, cofactor, params):
-        self.type = type
-        self.reactant = reactant
-        self.enzyme = enzyme
-        self.product = product
-        self.cofactor = cofactor
-        self.params = params
+    # these variables should be overriden in new mechanisms
+    name = 'base'           # name for the mechanism
+    required_params = []    # list of required parameters
+    nS = 1                  # number of required substrates 
+    nP = np.nan             # number of required products, or np.nan
+    nE = True               # enzymatic reaction
+
+    def __init__(self,rxn: pd.DataFrame):
+
+        try:
+            self.enzyme = rxn['Enzyme']
+            self.substrates = rxn['Substrate']
+            self.products = rxn['Product']
+            self.cofactors = rxn['Cofactor']
+            self.params = rxn['Parameters']
+            self.label = rxn['Label']
+        except:
+            raise KeyError("Missing Reaction fields")
+
+        self._processInput()
     
+    def _processInput(self):
+
+        # params
+        self.params = extractParams(self.params)
+        if not np.all([p in self.params for p in self.required_params]):
+            raise KeyError("No "+' or '.join(self.required_params)+" found in parameters for reaction "+self.label)
+
+        # cofactor
+        if str(self.cofactors) != 'nan':
+            self.cofactors = self.cofactors.split(';')
+        else:
+            self.cofactors = []
+
+        # enzyme
+        if (str(self.enzyme) == 'nan') and self.nE:
+            raise KeyError('No enzyme specified in reaction '+self.label)
+
+        # substrates
+        self.substrates = self.substrates.split(';')
+        if len(self.substrates) != self.nS:
+            raise ValueError(str(len(self.substrates))+' substrate(s) found for a '+ str(self.nS) + ' substrate mechanism in reaction '+self.label)
+
+        # products  
+        self.products = self.products.split(';')
+        if (not np.isnan(self.nP)) and (len(self.products) != self.nP):
+            raise ValueError(str(len(self.products))+' product(s) found for a '+ str(self.nP) + ' product  mechanism in reaction '+self.label)
+
     def handleCofactor(cofactor):
         """
         Facilitates including cofactors (ATP, NADH, etc.) into chemical reaction equation 
@@ -31,8 +73,7 @@ class Mechanism:
         return C
 
 
-    rxn_str = '\n# Define specified reactions \n'
-    def writeEquation(N, P, S, E, C):
+    def writeEquation(self) -> str:
         '''
         Writes chemical equations in form of A → B for all reactions defined in dataframe
         Input:
@@ -51,116 +92,67 @@ class Mechanism:
         but I still need it in equation definition
         '''
         
-        #N = rxn['Label'] # or ID
-        #E = rxn['Enzyme']
-        #S = rxn['Substrate'].split(';')
-        #P = rxn['Product'].split(';')
-        #C = handleCofactor(cofactor)
+        # C = handleCofactor(cofactor)
+        allS = ' + '.join(map(fmt, [*self.substrates,*self.cofactors]))
+        allP = ' + '.join(map(fmt, self.products))
 
-        '''
-        if E != 'nan':
-            for r in reactant.split(';'):
-                rxn_str += fmt(r) + ' + '
-            rxn_str += fmt(enzyme) + ' -> '
-            for p in product.split(';'):
-                rxn_str += fmt(p) + ' + '
-            rxn_str += fmt(enzyme) + '; '
-        else:
-            for r in rxn['Substrate'].split(';'):
-                rxn_str += fmt(r) + ' + '
-            rxn_str = rxn_str[:-3] + ' -> '
-            for p in rxn['Product'].split(';'):
-                rxn_str += fmt(p) + ' + '
-            rxn_str = rxn_str[:-3] + '; '
-        '''
-
-        '''
-        allS = ' + '.join(map(fmt, [*S,*C[0]]))
-        allP = ' + '.join(map(fmt, [*P, *C[1]])
-        if E != 'nan':
-            rxn_str += fmt(allS) + ' + ' + fmt(E) + ' -> ' + fmt(E) + ' + '  + allP + '; '
+        if self.enzyme != 'nan':
+            rxn_str = allS + ' + ' + fmt(self.enzyme) + ' -> ' + fmt(self.enzyme) + ' + '  + allP + '; '
         else: 
-            rxn_str += fmt(allS) + ' -> ' allP + '; '
+            rxn_str = allS + ' -> ' + allP + '; '
 
-        '''
         return rxn_str
+    
+    def writeRate(self) -> str:
+        pass
 
-    #how to call custom mechanism?
-        # mech = str(type)
-        # self.mech()
+class MichaelisMenten(Mechanism):
+    name = 'MM'                        # name for the mechanism
+    required_params = ['kcat','Km']    # list of required parameters
+    nS = 1                             # number of required substrates 
+    nP = np.nan                        # number of required products 
+    nE = True                          # enzymatic reaction
 
-    #Ryan: this is the part where I'm confused - how to properly make a class within class. 
-    if type == 'MM':
-        self.MM(reactant, enzyme, product, params)
-    elif type = 'OBB':
-        self.OBB(reactant, enzyme, product, params)
-    elif type = 'MA':
-        self.MA(reactant, enzyme, product, params)
-    elif type = 'PI':
-        self.PI(reactant, enzyme, product, params)
-
-
-class MM(Mechanism):
-    def writeRate:
-        N = rxn['Label'] # or ID
-        if str(E) == 'nan':
-            raise KeyError('No enzyme specified in reaction '+N)
-
-        if len(S)>1:
-            raise ValueError('More than one substrate specified in Michaelis–Menten mechanism for reaction '+N)
-
-        param_check = ['kcat','Km']
-        if not np.all([p in extractParams(params) for p in param_check]):
-            raise KeyError("No "+' or '.join(param_check)+" found in parameters for reaction "+N)
-
-        # Want to have general function that writes the equation and use this to write the rate
-        #writeEquation(product, reactant, enzyme, cofactor)
-        rxn_str += 'kcat_' + N + '*'+fmt(E)+'*'+fmt(*S)+'/('+'Km_' + N+' + '+fmt(*S)+'); \n'
+    def writeRate(self) -> str:
+        return 'kcat_' + self.label + '*'+fmt(self.enzyme)+'*'+fmt(*self.substrates)+'/('+'Km_' + self.label+' + '+fmt(*self.substrates)+');'
     
 
-class OBB(Mechanism):
+class OrderedBisubstrateBiproduct(Mechanism):
     # ordered bisubstrate-biproduct
     # must have two substrates and two products
     # https://iubmb.qmul.ac.uk/kinetics/ek4t6.html#p52
     # looks for kcat, Km1, Km2, K
 
-    N = rxn['Label'] # or ID
+    name = 'OBB'                                     # name for the mechanism
+    required_params = ['kcat', 'Km1', 'Km2', 'K']    # list of required parameters
+    nS = 2                                           # number of required substrates 
+    nP = 2                                           # number of required products 
+    nE = True                                        # enzymatic reaction
 
-    if str(E) == 'nan':
-        raise KeyError('No enzyme specified in reaction '+N)
+    def writeRate(self) -> str:
+        S = self.substrates
+        N = self.label
 
-    if len(S) != 2:
-        raise ValueError(str(len(S))+'substrate(s) found for a bisubstrate mechanism in reaction '+N)
-
-    if len(P) != 2:
-        raise ValueError(str(len(P))+'product(s) found for a biproduct mechanism in reaction '+N)
-        
-    param_check = ['kcat', 'Km1', 'Km2', 'K']
-    if not np.all([p in extractParams(params) for p in param_check]):
-        raise KeyError("No "+' or '.join(param_check)+" found in parameters for reaction "+N) 
-
-    # Want to have general function that writes the equation and use this to write the rate
-    #writeEquation(product, reactant, enzyme, cofactor)
-    rxn_str += 'kcat_' + N + '*'+fmt(E)+'*'+fmt(S[0])+'*'+fmt(S[1])+'/(' \
-                    +fmt(S[0])+'*'+fmt(S[1])+'+ Km1_' + N+'*'+fmt(S[0])+'+ Km2_' + N+'*'+fmt(S[1])+'+ K_' + N+'); \n'
+        return 'kcat_' + N + '*'+fmt(self.enzyme)+'*'+fmt(S[0])+'*'+fmt(S[1])+'/(' \
+                    +fmt(S[0])+'*'+fmt(S[1])+'+ Km1_' + N+'*'+fmt(S[0])+'+ Km2_' + N+'*'+fmt(S[1])+'+ K_' + N+');'
 
 
 
-class MA(Mechanism):
- # mass action kinetics
-    def writeRate:
-        rxn_str += 'K1_' + rxn['Label']
-        for p in rxn['Substrate'].split(';'):
-            p = fmt(p)
-            if p[0].isnumeric():
-                p = p[1:]+'^'+p[0]
-            rxn_str += '*' + p 
-        if enzyme != 'nan':
-            rxn_str += '*'+fmt(enzyme) + '; \n'
-        else:
-            rxn_str += ' \n'  
+# class MA(Mechanism):
+#  # mass action kinetics
+#     def writeRate(self):
+#         rxn_str += 'K1_' + rxn['Label']
+#         for p in rxn['Substrate'].split(';'):
+#             p = fmt(p)
+#             if p[0].isnumeric():
+#                 p = p[1:]+'^'+p[0]
+#             rxn_str += '*' + p 
+#         if enzyme != 'nan':
+#             rxn_str += '*'+fmt(enzyme) + '; \n'
+#         else:
+#             rxn_str += ' \n'  
 
   
-class PI(Mechanism):
+# class PI(Mechanism):
 
 

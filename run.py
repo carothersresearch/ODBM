@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 
 from odbm.odbm import ModelBuilder
 
-model_species = pd.read_excel('model_definition.xlsx', sheet_name = 'Species & Base Mechanisms', engine = 'openpyxl')
-model_rxns = pd.read_excel('model_definition.xlsx', sheet_name = 'Reaction', engine = 'openpyxl')
+model_species = pd.read_excel('model_definition_simple_ex.xlsx', sheet_name = 'Species & Base Mechanisms', engine = 'openpyxl')
+model_rxns = pd.read_excel('model_definition_simple_ex.xlsx', sheet_name = 'Reaction', engine = 'openpyxl')
 
 modelfile = 'new_model.txt'
 myModel = ModelBuilder(model_species, model_rxns)
@@ -16,6 +16,3 @@ myModel.saveModel(modelfile)
 model = open(modelfile,'r').read()
 r  = te.loada(model)
 s = r.simulate(0,10)
-plt.plot(s['time'],s['[ATP]'])
-plt.show()
-print(r)

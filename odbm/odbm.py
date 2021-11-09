@@ -18,7 +18,8 @@ class ModelBuilder:
     def writeReaction(self, rxn):
         m = rxn['Mechanism']
         try:
-            M = self.mech_dict[m](rxn)
+            M = self.mech_dict[m]
+            M = M(rxn)
         except KeyError:
             raise KeyError('No mechanism found called '+m)
 

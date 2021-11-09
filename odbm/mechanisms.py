@@ -25,6 +25,7 @@ class Mechanism:
             raise KeyError("Missing Reaction fields")
 
         self._processInput()
+        self._formatInput()
     
     def _processInput(self):
 
@@ -52,6 +53,12 @@ class Mechanism:
         self.products = self.products.split(';')
         if (not np.isnan(self.nP)) and (len(self.products) != self.nP):
             raise ValueError(str(len(self.products))+' product(s) found for a '+ str(self.nP) + ' product  mechanism in reaction '+self.label)
+        
+    def _formatInput(self):
+        self.products = list(map(fmt, self.products))
+        self.substrates = list(map(fmt, self.substrates))
+        if (str(self.cofactors) != 'nan'): self.cofactors = list(map(fmt, self.cofactors))
+        if (str(self.enzyme) != 'nan'): self.enzyme = fmt(self.enzyme)
 
     def handleCofactor(cofactor):
         """
@@ -71,7 +78,6 @@ class Mechanism:
         elif cofactor == 'NADH':
             C = ['NADH', 'NAD_plus']
         return C
-
 
     def writeEquation(self) -> str:
         '''
@@ -93,11 +99,11 @@ class Mechanism:
         '''
         
         # C = handleCofactor(cofactor)
-        allS = ' + '.join(map(fmt, [*self.substrates,*self.cofactors]))
-        allP = ' + '.join(map(fmt, self.products))
+        allS = ' + '.join([*self.substrates,*self.cofactors])
+        allP = ' + '.join(self.products)
 
         if self.enzyme != 'nan':
-            rxn_str = allS + ' + ' + fmt(self.enzyme) + ' -> ' + fmt(self.enzyme) + ' + '  + allP + '; '
+            rxn_str = allS + ' + ' + self.enzyme + ' -> ' + self.enzyme + ' + '  + allP + '; '
         else: 
             rxn_str = allS + ' -> ' + allP + '; '
 
@@ -114,7 +120,8 @@ class MichaelisMenten(Mechanism):
     nE = True                          # enzymatic reaction
 
     def writeRate(self) -> str:
-        return 'kcat_' + self.label + '*'+fmt(self.enzyme)+'*'+fmt(*self.substrates)+'/('+'Km_' + self.label+' + '+fmt(*self.substrates)+');'
+        S = self.substrates
+        return 'kcat_' + self.label + '*'+self.enzyme+'*'+S[0]+'/('+'Km_' + self.label+' + '+S[0]+');'
     
 
 class OrderedBisubstrateBiproduct(Mechanism):
@@ -133,24 +140,29 @@ class OrderedBisubstrateBiproduct(Mechanism):
         S = self.substrates
         N = self.label
 
-        return 'kcat_' + N + '*'+fmt(self.enzyme)+'*'+fmt(S[0])+'*'+fmt(S[1])+'/(' \
-                    +fmt(S[0])+'*'+fmt(S[1])+'+ Km1_' + N+'*'+fmt(S[0])+'+ Km2_' + N+'*'+fmt(S[1])+'+ K_' + N+');'
+        return 'kcat_' + N + '*'+self.enzyme+'*'+(S[0])+'*'+(S[1])+'/(' \
+                    +(S[0])+'*'+(S[1])+'+ Km1_' + N+'*'+(S[0])+'+ Km2_' + N+'*'+(S[1])+'+ K_' + N+');'
 
 
+class MassAction(Mechanism):
+    name = 'MA'                                     # name for the mechanism
+    required_params = ['k']                         # list of required parameters
+    nS = np.nan                                     # number of required substrates 
+    nP = np.nan                                     # number of required products 
+    nE = False                                      # enzymatic reaction
 
-# class MA(Mechanism):
-#  # mass action kinetics
-#     def writeRate(self):
-#         rxn_str += 'K1_' + rxn['Label']
-#         for p in rxn['Substrate'].split(';'):
-#             p = fmt(p)
-#             if p[0].isnumeric():
-#                 p = p[1:]+'^'+p[0]
-#             rxn_str += '*' + p 
-#         if enzyme != 'nan':
-#             rxn_str += '*'+fmt(enzyme) + '; \n'
-#         else:
-#             rxn_str += ' \n'  
+    # mass action kinetics
+    def writeRate(self) -> str:
+        rxn_str = 'K1_' + self.label
+        for p in self.substrates:
+            if p[0].isnumeric():
+                p = p[1:]+'^'+p[0]
+            rxn_str += '*' + p 
+        if self.enzyme != 'nan':
+            rxn_str += '*'+(self.enzyme) + ';'
+        else:
+            rxn_str += ';'
+        return rxn_str
 
   
 # class PI(Mechanism):

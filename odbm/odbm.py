@@ -1,9 +1,8 @@
 import pandas as pd
 from odbm.utils import extractParams, fmt
 
-from odbm.mechanisms import MichaelisMenten, OrderedBisubstrateBiproduct
-
-DEFAULT_MECHANISMS = [MichaelisMenten, OrderedBisubstrateBiproduct]
+from odbm.mechanisms import *
+DEFAULT_MECHANISMS = [MichaelisMenten, OrderedBisubstrateBiproduct, MassAction]
 
 class ModelBuilder:
 

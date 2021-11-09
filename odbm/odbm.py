@@ -77,3 +77,24 @@ class ModelBuilder:
     def saveModel(self, filename):
         with open(filename, 'w') as f:
             f.write(self.compile())
+
+    def get_reaction(self, id):
+        if type(id) is int:
+            r = self.rxns.iloc[id]
+        elif type(id) is str:
+            r = self.rxns[self.rxns['Label'] == id]
+        return r
+    
+    def get_substrates(self, id, cofactors = True):
+        r = self.get_reaction(id)
+
+        if cofactors and (str(r['Cofactor']) != 'nan'):
+            X = [*r['Substrate'].split(';'), *r['Cofactor'].split(';')]
+        else:
+            X = r['Substrate'].split(';')
+
+        return list(map(fmt, X))
+
+    def get_products(self, id):
+        r = self.get_reaction(id)
+        return list(map(fmt, r['Product'].split(';')))

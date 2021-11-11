@@ -164,7 +164,20 @@ class MassAction(Mechanism):
             rxn_str += ';'
         return rxn_str
 
-  
+class simplifiedOBB(Mechanism):
+    name = 'SOBB'                                     # name for the mechanism
+    required_params = ['kcat', 'Km1', 'Km2']    # list of required parameters
+    nS = 2                                           # number of required substrates 
+    nP = 2                                           # number of required products 
+    nE = True                                        # enzymatic reaction
+
+    def writeRate(self) -> str:
+        S = self.substrates
+        N = self.label
+
+        return 'kcat_' + N + '*'+self.enzyme+'*'+(S[0])+'*'+(S[1])+'/(' \
+                    +(S[0])+'*'+(S[1])+'+ Km1_' + N+'*'+(S[1])+'+ Km2_' + N+'*'+(S[0])+'+ Km1_' + N+ '*Km2_'+ N+');'
+
 # class PI(Mechanism):
 
 

@@ -46,7 +46,7 @@ class Mechanism:
 
         # substrates
         self.substrates = self.substrates.split(';')
-        if len(self.substrates) != self.nS:
+        if len(self.substrates) != self.nS and np.isnan(self.nS) == False:
             raise ValueError(str(len(self.substrates))+' substrate(s) found for a '+ str(self.nS) + ' substrate mechanism in reaction '+self.label)
 
         # products  
@@ -60,24 +60,7 @@ class Mechanism:
         if (str(self.cofactors) != 'nan'): self.cofactors = list(map(fmt, self.cofactors))
         if (str(self.enzyme) != 'nan'): self.enzyme = fmt(self.enzyme)
 
-    def handleCofactor(cofactor):
-        """
-        Facilitates including cofactors (ATP, NADH, etc.) into chemical reaction equation 
-        Input:
-            1. cofactor (str) with cofactor label
 
-        Returns:
-            2. C (list) of [substrate, product] for cofactor, e.g. [ATP, ADP] or [NADH, NAD_plus]
-        """
-        # only handles common cofactors (ATP, NADH) and not very well
-        # The idea I'm going for is we read in the cofactor 
-        # and can return the substrate/product form to be used for writing the equation
-        C = []
-        if cofactor == 'ATP':
-            C = ['ATP','ADP']
-        elif cofactor == 'NADH':
-            C = ['NADH', 'NAD_plus']
-        return C
 
     def writeEquation(self) -> str:
         '''
@@ -98,7 +81,6 @@ class Mechanism:
         but I still need it in equation definition
         '''
         
-        # C = handleCofactor(cofactor)
         allS = ' + '.join([*self.substrates,*self.cofactors])
         allP = ' + '.join(self.products)
 
@@ -153,7 +135,7 @@ class MassAction(Mechanism):
 
     # mass action kinetics
     def writeRate(self) -> str:
-        rxn_str = 'K1_' + self.label
+        rxn_str = 'k_' + self.label
         for p in self.substrates:
             if p[0].isnumeric():
                 p = p[1:]+'^'+p[0]

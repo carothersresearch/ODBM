@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 
 from odbm.odbm import ModelBuilder
 
-model_species = pd.read_excel('model_definition_simple_ex.xlsx', sheet_name = 'Species & Base Mechanisms', engine = 'openpyxl')
-model_rxns = pd.read_excel('model_definition_simple_ex.xlsx', sheet_name = 'Reaction', engine = 'openpyxl')
+model_species = pd.read_excel('model_txtl_test.xlsx', sheet_name = 'Species & Base Mechanisms', engine = 'openpyxl')
+model_rxns = pd.read_excel('model_txtl_test.xlsx', sheet_name = 'Reaction', engine = 'openpyxl')
 
-modelfile = 'new_model.txt'
+modelfile = 'txtl_model.txt'
 myModel = ModelBuilder(model_species, model_rxns)
 myModel.saveModel(modelfile)
 

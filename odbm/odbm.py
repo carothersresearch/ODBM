@@ -16,6 +16,10 @@ class ModelBuilder:
         self.mech_dict[new_mechanism.name] = new_mechanism
 
     def writeReaction(self, rxn):
+        '''
+
+
+        '''
         m = rxn['Mechanism']
         try:
             M = self.mech_dict[m]
@@ -31,6 +35,10 @@ class ModelBuilder:
 
 
     def addTranscription(self, species):
+        '''
+
+
+        '''
         #Not sure what best way to define default txn rate is
         #Promoter strength can be programmed in through k1
 
@@ -57,6 +65,10 @@ class ModelBuilder:
         return TX
 
     def addTranslation(self, species):
+        '''
+
+
+        '''
         default_tl = 10 #Not sure what best way to define default txn rate is
         TL = {}
         TL['Label'] = fmt(species['Label']) + "_TL"
@@ -74,6 +86,11 @@ class ModelBuilder:
 
 
     def writeSpecies(self, species):
+        '''
+
+
+        '''
+
         label = fmt(species['Label'])
         species['Label'] = label
         
@@ -97,6 +114,10 @@ class ModelBuilder:
         return s_str
 
     def writeParameters(self, rxn):
+        '''
+
+
+        '''
         p_str = ''
         if not pd.isnull(rxn['Parameters']):
             #initialize value
@@ -111,14 +132,19 @@ class ModelBuilder:
 
 
     def compile(self):
+        '''
+
+
+        '''
+
         s_str = '# Initialize concentrations \n'
         p_str = '\n# Initialize parameters \n'
         r_str = '# Define specified reactions \n'
 
         if 'DNA' in self.species['Type']:
             #how to add species?
-            self.species = self.species.append({'Label':'Ribosome', 'Starting Conc':1, 'Type':'Enzyme'}, ignore_index =True)
-            self.species = self.species.append({'Label':'RNAP', 'Starting Conc':1, 'Type':'Enzyme'}, ignore_index = True)
+            self.species = self.species.append({'Label':'Ribosome', 'Starting Conc':10, 'Type':'Enzyme'}, ignore_index =True)
+            self.species = self.species.append({'Label':'RNAP', 'Starting Conc':10, 'Type':'Enzyme'}, ignore_index = True)
 
         for _, sp in self.species.iterrows():
             s_str += self.writeSpecies(sp)

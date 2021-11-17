@@ -2,7 +2,7 @@ import pandas as pd
 from odbm.utils import extractParams, fmt
 
 from odbm.mechanisms import *
-DEFAULT_MECHANISMS = [MichaelisMenten, OrderedBisubstrateBiproduct, MassAction, simplifiedOBB, LinearCofactor]
+DEFAULT_MECHANISMS = [MichaelisMenten, OrderedBisubstrateBiproduct, MassAction, simplifiedOBB, LinearCofactor, TX_MM]
 
 class ModelBuilder:
 
@@ -15,74 +15,93 @@ class ModelBuilder:
     def addMechanism(self, new_mechanism):
         self.mech_dict[new_mechanism.name] = new_mechanism
 
-    def addSpecies(self, Label, StartingConc, Type = None, Mechanism = None, Parameters = None):
+    def addSpecies(self, Label, StartingConc, Type = np.nan, Mechanism = np.nan, Parameters = np.nan):
         args = locals()
         args.pop('self')
         # maybe check inputs??
         # maybe check not already there? does apppend throw error?
         self.species = self.species.append(args,ignore_index = True) 
 
-    def addReaction(self, Mechanism, Substrate, Product, Parameters, Enzyme = None, Cofactor = None, Label = None):
+    def addReaction(self, Mechanism, Substrate, Product, Parameters, Enzyme = np.nan, Cofactor = np.nan, Label = np.nan):
         args = locals()
         args.pop('self')
         # maybe check inputs??
         # maybe do something about the Label        
         self.rxns = self.rxns.append(args,ignore_index = True)
     
-    def addTX(self, species, mechanism):
-        label = fmt(species['Label']) + "_TX"
-        # hmmm but we may not know the mechanism substrates/products....
-        self.addReaction(mechanism, Label = label)
+    def applyMechanism(self,mechanism,species):
+        M = self.mech_dict[mechanism]
+        substrate = fmt(species['Label'])
+        label = M.generate_label(substrate)
+        product = M.generate_product(substrate)
+        parameters = species['Parameters']
 
-    def addTranscription(self, species):
-        '''
+        if M.nS > 1:
+            substrate = substrate +';'+ M.required_substrates
+
+        if M.nE:
+            enzyme = M.required_enzyme
+        else:
+            enzyme = np.nan
+
+        if M.nC:
+            cofactor = M.reuired_cofactor
+        else:
+            cofactor = np.nan
+
+        self.addReaction(mechanism, substrate, product, parameters, enzyme, cofactor, Label = label)
+
+        return # species that must be initialized
+
+    # def addTranscription(self, species):
+    #     '''
 
 
-        '''
-        #Not sure what best way to define default txn rate is
-        #Promoter strength can be programmed in through k1
+    #     '''
+    #     #Not sure what best way to define default txn rate is
+    #     #Promoter strength can be programmed in through k1
 
-        default_tx = 10 
-        TX = {}
-        TX['Label'] = fmt(species['Label']) + "_TX"
-        TX['Substrate'] = species['Label']
-        TX['Product'] = (species['Label'][:-3] +'RNA')
+    #     default_tx = 10 
+    #     TX = {}
+    #     TX['Label'] = fmt(species['Label']) + "_TX"
+    #     TX['Substrate'] = species['Label']
+    #     TX['Product'] = (species['Label'][:-3] +'RNA')
 
-        if 'TX1' in species['Mechanisms']:
-            TX['Enzyme'] = 'RNAP'
-            TX['Mechanism'] = 'MA'
-            if not pd.isnull(species['K1']):
-                TX['Parameters'] = 'k:'+str(species['K1'])
-            else:
-                TX['Parameters'] = 'k:'+str(default_tx)
+    #     if 'TX1' in species['Mechanisms']:
+    #         TX['Enzyme'] = 'RNAP'
+    #         TX['Mechanism'] = 'MA'
+    #         if not pd.isnull(species['K1']):
+    #             TX['Parameters'] = 'k:'+str(species['K1'])
+    #         else:
+    #             TX['Parameters'] = 'k:'+str(default_tx)
             
         
-        if 'CRISPRa' in species['Mechanisms']:
-            TX['Enzyme'] = 'RNAP,dCas9,MCP-SoxS'
-            TX['Mechanism'] = 'CRISPR'
-            TX['Parameters'] = 'k:'+str(default_tx)
+    #     if 'CRISPRa' in species['Mechanisms']:
+    #         TX['Enzyme'] = 'RNAP,dCas9,MCP-SoxS'
+    #         TX['Mechanism'] = 'CRISPR'
+    #         TX['Parameters'] = 'k:'+str(default_tx)
 
-        return TX
+    #     return TX
 
-    def addTranslation(self, species):
-        '''
+    # def addTranslation(self, species):
+    #     '''
 
 
-        '''
-        default_tl = 10 #Not sure what best way to define default txn rate is
-        TL = {}
-        TL['Label'] = fmt(species['Label']) + "_TL"
-        TL['Substrate'] = species['Label'][:-3] +'RNA'
-        TL['Product'] = (species['Label'][:-4])
-        TL['Enzyme'] = 'Ribosome'
-        # we may want to change the mechanism
-        TL['Mechanism'] = 'MA' 
-        if not pd.isnull(species['K2']):
-            TL['Parameters'] = 'k:'+str(species['K2'])
-        else:
-            TL['Parameters'] = 'k:'+str(default_tl)
+    #     '''
+    #     default_tl = 10 #Not sure what best way to define default txn rate is
+    #     TL = {}
+    #     TL['Label'] = fmt(species['Label']) + "_TL"
+    #     TL['Substrate'] = species['Label'][:-3] +'RNA'
+    #     TL['Product'] = (species['Label'][:-4])
+    #     TL['Enzyme'] = 'Ribosome'
+    #     # we may want to change the mechanism
+    #     TL['Mechanism'] = 'MA' 
+    #     if not pd.isnull(species['K2']):
+    #         TL['Parameters'] = 'k:'+str(species['K2'])
+    #     else:
+    #         TL['Parameters'] = 'k:'+str(default_tl)
         
-        return TL
+    #     return TL
 
     def writeSpecies(self, species):
         '''
@@ -97,10 +116,11 @@ class ModelBuilder:
         # if its DNA, initialize RNA and protein (AA) to 0
         if 'DNA' in species['Label']:
             s_str += (label[:-3] +'RNA=0; \n') #RNA
-            self.rxns = self.rxns.append(self.addTranscription(species), ignore_index = 'True')
+            self.applyMechanism(species['Mechanisms'], species)
+            # self.rxns = self.rxns.append(self.addTranscription(species), ignore_index = 'True')
 
-            s_str += (label[:-4] +'=0; \n') #Enzyme
-            self.rxns = self.rxns.append(self.addTranslation(species), ignore_index = 'True')
+            # s_str += (label[:-4] +'=0; \n') #Enzyme
+            # self.rxns = self.rxns.append(self.addTranslation(species), ignore_index = 'True')
 
 
         if not pd.isnull(species['Mechanisms']):

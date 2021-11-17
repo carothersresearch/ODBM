@@ -1,3 +1,4 @@
+from os import name
 from numpy.core.fromnumeric import product
 import pandas as pd
 import numpy as np
@@ -100,6 +101,7 @@ class MichaelisMenten(Mechanism):
     nS = 1                             # number of required substrates 
     nP = np.nan                        # number of required products 
     nE = True                          # enzymatic reaction
+    nC = False
 
     def writeRate(self) -> str:
         S = self.substrates
@@ -158,6 +160,11 @@ class simplifiedOBB(Mechanism):
                     +(S[0])+'*'+(S[1])+'+ Km1_' + N+'*'+(S[1])+'+ Km2_' + N+'*'+(S[0])+'+ Km1_' + N+ '*Km2_'+ N+')'
 
 # class PI(Mechanism):
+class TX_MM(MichaelisMenten):
+    name = 'TX_MM'
+    required_enzyme = 'RNAP'
+    generate_label = lambda l: l+'_TX'
+    generate_product = lambda s: s + ';' + s[:-3]+'RNA'
 
 class Modifier(Mechanism):
 

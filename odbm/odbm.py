@@ -35,6 +35,10 @@ class ModelBuilder:
         self.addReaction(mechanism, Label = label)
 
     def addTranscription(self, species):
+        '''
+
+
+        '''
         #Not sure what best way to define default txn rate is
         #Promoter strength can be programmed in through k1
 
@@ -61,6 +65,10 @@ class ModelBuilder:
         return TX
 
     def addTranslation(self, species):
+        '''
+
+
+        '''
         default_tl = 10 #Not sure what best way to define default txn rate is
         TL = {}
         TL['Label'] = fmt(species['Label']) + "_TL"
@@ -77,6 +85,11 @@ class ModelBuilder:
         return TL
 
     def writeSpecies(self, species):
+        '''
+
+
+        '''
+
         label = fmt(species['Label'])
         species['Label'] = label
         
@@ -116,6 +129,10 @@ class ModelBuilder:
         return '\n' + M.writeEquation() + '; \n' + rate_str+'; '
 
     def writeParameters(self, rxn):
+        '''
+
+
+        '''
         p_str = ''
         if not pd.isnull(rxn['Parameters']):
             #initialize value
@@ -129,6 +146,11 @@ class ModelBuilder:
         return p_str
 
     def compile(self):
+        '''
+
+
+        '''
+
         s_str = '# Initialize concentrations \n'
         p_str = '\n# Initialize parameters \n'
         r_str = '# Define specified reactions \n'

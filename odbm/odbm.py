@@ -29,12 +29,12 @@ class ModelBuilder:
         # maybe do something about the Label        
         self.rxns = self.rxns.append(args,ignore_index = True)
     
-    def applyMechanism(self,mechanism,species):
+    def applyMechanism(self, mechanism, species):
         M = self.mech_dict[mechanism]
         substrate = fmt(species['Label'])
         label = M.generate_label(substrate)
         product = M.generate_product(substrate)
-        parameters = species['Parameters']
+        parameters = species['Parameters'] # this probably needs to be handled better (more than one mechanism)
 
         if M.nS > 1:
             substrate = substrate +';'+ M.required_substrates
@@ -113,6 +113,8 @@ class ModelBuilder:
         species['Label'] = label
         
         s_str = (label +'=' + str(species['StartingConc']) + '; \n')
+
+        # this should all be taken care of by applyMechansim
         # if its DNA, initialize RNA and protein (AA) to 0
         if 'DNA' in species['Label']:
             s_str += (label[:-3] +'RNA=0; \n') #RNA
@@ -122,7 +124,7 @@ class ModelBuilder:
             # s_str += (label[:-4] +'=0; \n') #Enzyme
             # self.rxns = self.rxns.append(self.addTranslation(species), ignore_index = 'True')
 
-
+        # in this loop iterate mechanisms and apply to species. initialize extra species returned 
         if not pd.isnull(species['Mechanisms']):
             mechanisms = species['Mechanisms'].split(';')
             for m in mechanisms:

@@ -2,7 +2,7 @@ import pandas as pd
 from odbm.utils import extractParams, fmt
 
 from odbm.mechanisms import *
-DEFAULT_MECHANISMS = [MichaelisMenten, OrderedBisubstrateBiproduct, MassAction, simplifiedOBB]
+DEFAULT_MECHANISMS = [MichaelisMenten, OrderedBisubstrateBiproduct, MassAction, simplifiedOBB, LinearCofactor]
 
 class ModelBuilder:
 
@@ -15,20 +15,24 @@ class ModelBuilder:
     def addMechanism(self, new_mechanism):
         self.mech_dict[new_mechanism.name] = new_mechanism
 
-    def writeReaction(self, rxn):
-        m = rxn['Mechanism']
-        try:
-            M = self.mech_dict[m]
-            M = M(rxn)
-        except KeyError:
-            # bug here: throws error for no mechanism found even if issue is incorrect parameters
-            raise KeyError('No mechanism found called '+m)
+    def addSpecies(self, Label, StartingConc, Type = None, Mechanism = None, Parameters = None):
+        args = locals()
+        args.pop('self')
+        # maybe check inputs??
+        # maybe check not already there? does apppend throw error?
+        self.species = self.species.append(args,ignore_index = True) 
 
-        rxn_str = '\n'
-        rxn_str += M.writeEquation() + M.writeRate()
-
-        return rxn_str
-
+    def addReaction(self, Mechanism, Substrate, Product, Parameters, Enzyme = None, Cofactor = None, Label = None):
+        args = locals()
+        args.pop('self')
+        # maybe check inputs??
+        # maybe do something about the Label        
+        self.rxns = self.rxns.append(args,ignore_index = True)
+    
+    def addTX(self, species, mechanism):
+        label = fmt(species['Label']) + "_TX"
+        # hmmm but we may not know the mechanism substrates/products....
+        self.addReaction(mechanism, Label = label)
 
     def addTranscription(self, species):
         #Not sure what best way to define default txn rate is
@@ -72,12 +76,11 @@ class ModelBuilder:
         
         return TL
 
-
     def writeSpecies(self, species):
         label = fmt(species['Label'])
         species['Label'] = label
         
-        s_str = (label +'=' + str(species['Starting Conc']) + '; \n')
+        s_str = (label +'=' + str(species['StartingConc']) + '; \n')
         # if its DNA, initialize RNA and protein (AA) to 0
         if 'DNA' in species['Label']:
             s_str += (label[:-3] +'RNA=0; \n') #RNA
@@ -96,6 +99,22 @@ class ModelBuilder:
 
         return s_str
 
+    def writeReaction(self, rxn):
+        m = rxn['Mechanism'].split(';')
+
+        try:
+            M = self.mech_dict[m[0]](rxn)
+        except KeyError:
+            # bug here: throws error for no mechanism found even if issue is incorrect parameters
+            raise KeyError('No mechanism found called '+m[0])
+        
+        rate_str = M.writeRate()
+        for mod in m[1:]:
+            MOD = self.mech_dict[mod](rxn)
+            rate_str = MOD.apply(rate_str)
+
+        return '\n' + M.writeEquation() + '; \n' + rate_str+'; '
+
     def writeParameters(self, rxn):
         p_str = ''
         if not pd.isnull(rxn['Parameters']):
@@ -109,7 +128,6 @@ class ModelBuilder:
 
         return p_str
 
-
     def compile(self):
         s_str = '# Initialize concentrations \n'
         p_str = '\n# Initialize parameters \n'
@@ -117,8 +135,8 @@ class ModelBuilder:
 
         if 'DNA' in self.species['Type']:
             #how to add species?
-            self.species = self.species.append({'Label':'Ribosome', 'Starting Conc':1, 'Type':'Enzyme'}, ignore_index =True)
-            self.species = self.species.append({'Label':'RNAP', 'Starting Conc':1, 'Type':'Enzyme'}, ignore_index = True)
+            self.addSpecies('Ribosome', 1, 'Enzyme')
+            self.addSpecies('RNAP', 1, 'Enzyme')
 
         for _, sp in self.species.iterrows():
             s_str += self.writeSpecies(sp)

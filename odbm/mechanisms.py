@@ -6,7 +6,7 @@ from odbm.utils import extractParams, fmt
 class Mechanism:
 
     # these variables should be overriden in new mechanisms
-    name = 'base'           # name for the mechanism
+    name = 'base_mechanism' # name for the mechanism
     required_params = []    # list of required parameters
     nS = 1                  # number of required substrates 
     nP = np.nan             # number of required products, or np.nan
@@ -85,11 +85,11 @@ class Mechanism:
         allP = ' + '.join(self.products)
 
         if self.enzyme != 'nan':
-            rxn_str = allS + ' + ' + self.enzyme + ' -> ' + self.enzyme + ' + '  + allP + '; '
+            rxn_str = allS + ' + ' + self.enzyme + ' -> ' + self.enzyme + ' + '  + allP
         else: 
-            rxn_str = allS + ' -> ' + allP + '; '
+            rxn_str = allS + ' -> ' + allP
 
-        return rxn_str
+        return self.label +' : '+rxn_str
     
     def writeRate(self) -> str:
         pass
@@ -103,9 +103,8 @@ class MichaelisMenten(Mechanism):
 
     def writeRate(self) -> str:
         S = self.substrates
-        return 'kcat_' + self.label + '*'+self.enzyme+'*'+S[0]+'/('+'Km_' + self.label+' + '+S[0]+');'
+        return self.label +' = '+'kcat_' + self.label + '*'+self.enzyme+'*'+S[0]+'/('+'Km_' + self.label+' + '+S[0]+')'
     
-
 class OrderedBisubstrateBiproduct(Mechanism):
     # ordered bisubstrate-biproduct
     # must have two substrates and two products
@@ -122,9 +121,8 @@ class OrderedBisubstrateBiproduct(Mechanism):
         S = self.substrates
         N = self.label
 
-        return 'kcat_' + N + '*'+self.enzyme+'*'+(S[0])+'*'+(S[1])+'/(' \
-                    +(S[0])+'*'+(S[1])+'+ Km1_' + N+'*'+(S[0])+'+ Km2_' + N+'*'+(S[1])+'+ K_' + N+');'
-
+        return self.label +' = '+'kcat_' + N + '*'+self.enzyme+'*'+(S[0])+'*'+(S[1])+'/(' \
+                    +(S[0])+'*'+(S[1])+'+ Km1_' + N+'*'+(S[0])+'+ Km2_' + N+'*'+(S[1])+'+ K_' + N+')'
 
 class MassAction(Mechanism):
     name = 'MA'                                     # name for the mechanism
@@ -141,10 +139,9 @@ class MassAction(Mechanism):
                 p = p[1:]+'^'+p[0]
             rxn_str += '*' + p 
         if self.enzyme != 'nan':
-            rxn_str += '*'+(self.enzyme) + ';'
-        else:
-            rxn_str += ';'
-        return rxn_str
+            rxn_str += '*'+(self.enzyme)
+
+        return self.label +' = '+rxn_str
 
 class simplifiedOBB(Mechanism):
     name = 'SOBB'                                     # name for the mechanism
@@ -157,9 +154,34 @@ class simplifiedOBB(Mechanism):
         S = self.substrates
         N = self.label
 
-        return 'kcat_' + N + '*'+self.enzyme+'*'+(S[0])+'*'+(S[1])+'/(' \
-                    +(S[0])+'*'+(S[1])+'+ Km1_' + N+'*'+(S[1])+'+ Km2_' + N+'*'+(S[0])+'+ Km1_' + N+ '*Km2_'+ N+');'
+        return self.label +' = '+'kcat_' + N + '*'+self.enzyme+'*'+(S[0])+'*'+(S[1])+'/(' \
+                    +(S[0])+'*'+(S[1])+'+ Km1_' + N+'*'+(S[1])+'+ Km2_' + N+'*'+(S[0])+'+ Km1_' + N+ '*Km2_'+ N+')'
 
 # class PI(Mechanism):
 
+class Modifier(Mechanism):
 
+    name = 'base_modifier'  # name for the mechanism
+    required_params = []    # list of required parameters
+    nS = 1                  # number of required substrates 
+    nP = np.nan             # number of required products, or np.nan
+    # nC ???
+    nE = True               # enzymatic reaction
+
+    def writeEquation(self):
+        # no need 
+        pass
+
+    def apply(self, rxn_rate):
+        # overide
+        pass
+
+class LinearCofactor(Modifier):
+    name = 'LC'                                     # name for the mechanism
+    required_params = ['maxC']                      # list of required parameters
+    nS = np.nan                                     # number of required substrates 
+    nP = np.nan                                     # number of required products 
+    nE = False                                      # enzymatic reaction
+
+    def apply(self, rxn_rate):
+        return rxn_rate+' * ('+self.cofactors[0]+'/maxC_'+self.label+')'

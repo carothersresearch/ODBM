@@ -78,25 +78,46 @@ class HillCofactor(Modifier):
 
         return rxn_rate+' * (1/(1+('+Ka+'/'+C+')^'+n+'))'
 
-class ProductInhibition(Modifier):
+class Inhibition(Modifier):
+    name = 'base_inhibition'
+
+    def alpha(a, I, Ki) -> str:
+        return a+' = (1 + '+I+'/'+Ki+')'
+    
+    def competitve(var: str, a: str): # change just Km
+        mod = a+'*'+var
+        return var, mod
+
+    def noncompetitve(var: str, a: str): # change just kcat
+        mod = '('+var+'/'+a+')'
+        return var, mod
+
+    def uncompetitve(vars: list, a: str): # change both kcat and Km
+        mods = []
+        for v in vars:
+            mods.append('('+v+'/'+a+')')
+        return vars, mods
+
+    # for mixed inhibition just call competitive and uncompetitive
+
+class ProductInhibition(Inhibition):
     name = 'PI'
     required_params = ['KiP.+'] # regex to accept multiple. how to specifify which product is affecting which substrate?
     nP = np.nan # or error if 1 ...
 
     @overrides
     def apply(self, rxn_rate: str) -> str:
-        P = [p for p in self.params.keys() if re.match(self.required_params[0],p)]
+        P = [p for p in self.params.keys() if re.match(self.required_params[0], p)]
         for p in P:
             id = p[-1]
             a = 'a'+id+'_'+self.label
             Ki = p+'_'+self.label
             I = self.products[int(id)-1]
+            
+            Km = 'Km' + id # assuming 1st product inhibits 1st substrate !
+            Km, aKm = self.competitve(Km, a)
 
-            Km = 'Km'+id # assuming prod 1 inhibits substrate 1 !!!!!!!!
-            aKm = a+'*'+Km
-
-            alpha = a+' = (1 + '+I+'/'+Ki+')'
-            rxn_rate = rxn_rate.replace(Km,aKm)
-            rxn_rate += '; ' + alpha
+            rxn_rate = rxn_rate.replace(Km, aKm)
+            rxn_rate += '; ' + self.alpha(a, I, Ki)
 
         return rxn_rate

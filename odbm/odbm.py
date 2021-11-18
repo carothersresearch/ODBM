@@ -2,9 +2,46 @@ import pandas as pd
 from odbm.utils import extractParams, fmt
 
 from odbm.mechanisms import *
+from odbm.modifiers import *
 DEFAULT_MECHANISMS = [MichaelisMenten, OrderedBisubstrateBiproduct, MassAction, simplifiedOBB, LinearCofactor, TX_MM]
 
 class ModelBuilder:
+    """
+    A class used to keep species and reaction information and compile them into an Antamony model
+
+    Attributes
+    ----------
+    mech_dict : str
+        a dictionary with available Mechanisms
+    species : pd.DataFrame
+        dataframe where each row is a different species
+    rxns : pd.DataFrame
+        dataframe where each row is a different reaction
+
+    Methods
+    -------
+    addMechanism(self, new_mechanism: Mechanism):
+        Adds a new Mechanism to the internal mechanism dictionary 
+
+    addSpecies(self, Label, StartingConc, Type = np.nan, Mechanism = np.nan, Parameters = np.nan):
+        Adds a new species to the internal species dataframe 
+
+    addReaction(self, Mechanism, Substrate, Product, Parameters, Enzyme = np.nan, Cofactor = np.nan, Label = np.nan):
+        Adds a new reaction to the internal reaction dataframe
+    
+    get_substrates(self, id: int or str, cofactors = True):
+        Returns a list of susbtrates given a reaction index
+    
+    get_products(self, id: int or str):
+        Returns a list of products given a reaction index
+    
+    compile():
+        Iterates through all species and reactions and generates an Antimony string
+    
+    saveModel(self, filename:str):
+        Saves the Antimony model to a text file
+
+    """
 
     def __init__(self, species, reactions):
         self.mech_dict = {}
@@ -12,125 +49,97 @@ class ModelBuilder:
         self.species = species
         self.rxns = reactions
 
-    def addMechanism(self, new_mechanism):
+    def addMechanism(self, new_mechanism: Mechanism):
+        """Adds a new Mechanism to the internal mechanism dictionary 
+
+        Parameters
+        ----------
+        new_mechanism (Mechanism): Mechanism class 
+        """
         self.mech_dict[new_mechanism.name] = new_mechanism
 
     def addSpecies(self, Label, StartingConc, Type = np.nan, Mechanism = np.nan, Parameters = np.nan):
+        """
+        Adds a new species to the internal species dataframe
+
+        Parameters
+        ----------
+        Label : str
+        StartingConc : str
+        Type : str, optional, by default np.nan
+        Mechanism : str, optional, by default np.nan
+        Parameters : str, optional, by default np.nan
+        """
         args = locals()
         args.pop('self')
         # maybe check inputs??
-        # maybe check not already there? does apppend throw error?
-        self.species = self.species.append(args,ignore_index = True) 
+        if not self.species['Label'].str.contains(Label).any():
+            self.species = self.species.append(args,ignore_index = True) 
 
     def addReaction(self, Mechanism, Substrate, Product, Parameters, Enzyme = np.nan, Cofactor = np.nan, Label = np.nan):
+        """
+        Adds a new reactions to the internal reaction dataframe
+
+        Parameters
+        ----------
+        Mechanism : str
+        Substrate : str
+        Product : str
+        Parameters : str
+        Enzyme : str, optional, by default np.nan
+        Cofactor : str, optional, by default np.nan
+        Label : str, optional, by default np.nan
+        """
         args = locals()
         args.pop('self')
         # maybe check inputs??
         # maybe do something about the Label        
         self.rxns = self.rxns.append(args,ignore_index = True)
-    
+
     def applyMechanism(self, mechanism, species):
         M = self.mech_dict[mechanism]
         substrate = fmt(species['Label'])
         label = M.generate_label(substrate)
         product = M.generate_product(substrate)
-        parameters = species['Parameters'] # this probably needs to be handled better (more than one mechanism)
+        parameters = species['Parameters']
+        pdict = extractParams(parameters)
+
+        def lookup(lbl:str):
+            K = '0'
+            for k in pdict.keys():
+                if lbl in k:
+                    K = pdict[k]
+            return K
 
         if M.nS > 1:
             substrate = substrate +';'+ M.required_substrates
+            for s in M.required_substrates.split(';'):
+                self.addSpecies(s, lookup(s))
 
-        if M.nE:
+        if not np.isnan(M.nE):
             enzyme = M.required_enzyme
+            for e in enzyme.split(';'):
+                self.addSpecies(e, lookup(e))
         else:
             enzyme = np.nan
 
-        if M.nC:
-            cofactor = M.reuired_cofactor
+        if not np.isnan(M.nC):
+            cofactor = M.required_cofactor
+            for c in cofactor.split(';'):
+                self.addSpecies(c, lookup(c))
         else:
             cofactor = np.nan
 
+        for p in product.split(';'):
+            self.addSpecies(p, lookup(p))
+
         self.addReaction(mechanism, substrate, product, parameters, enzyme, cofactor, Label = label)
 
-        return # species that must be initialized
-
-    # def addTranscription(self, species):
-    #     '''
-
-
-    #     '''
-    #     #Not sure what best way to define default txn rate is
-    #     #Promoter strength can be programmed in through k1
-
-    #     default_tx = 10 
-    #     TX = {}
-    #     TX['Label'] = fmt(species['Label']) + "_TX"
-    #     TX['Substrate'] = species['Label']
-    #     TX['Product'] = (species['Label'][:-3] +'RNA')
-
-    #     if 'TX1' in species['Mechanisms']:
-    #         TX['Enzyme'] = 'RNAP'
-    #         TX['Mechanism'] = 'MA'
-    #         if not pd.isnull(species['K1']):
-    #             TX['Parameters'] = 'k:'+str(species['K1'])
-    #         else:
-    #             TX['Parameters'] = 'k:'+str(default_tx)
-            
-        
-    #     if 'CRISPRa' in species['Mechanisms']:
-    #         TX['Enzyme'] = 'RNAP,dCas9,MCP-SoxS'
-    #         TX['Mechanism'] = 'CRISPR'
-    #         TX['Parameters'] = 'k:'+str(default_tx)
-
-    #     return TX
-
-    # def addTranslation(self, species):
-    #     '''
-
-
-    #     '''
-    #     default_tl = 10 #Not sure what best way to define default txn rate is
-    #     TL = {}
-    #     TL['Label'] = fmt(species['Label']) + "_TL"
-    #     TL['Substrate'] = species['Label'][:-3] +'RNA'
-    #     TL['Product'] = (species['Label'][:-4])
-    #     TL['Enzyme'] = 'Ribosome'
-    #     # we may want to change the mechanism
-    #     TL['Mechanism'] = 'MA' 
-    #     if not pd.isnull(species['K2']):
-    #         TL['Parameters'] = 'k:'+str(species['K2'])
-    #     else:
-    #         TL['Parameters'] = 'k:'+str(default_tl)
-        
-    #     return TL
-
     def writeSpecies(self, species):
-        '''
-
-
-        '''
-
         label = fmt(species['Label'])
         species['Label'] = label
         
         s_str = (label +'=' + str(species['StartingConc']) + '; \n')
-
-        # this should all be taken care of by applyMechansim
-        # if its DNA, initialize RNA and protein (AA) to 0
-        if 'DNA' in species['Label']:
-            s_str += (label[:-3] +'RNA=0; \n') #RNA
-            self.applyMechanism(species['Mechanisms'], species)
-            # self.rxns = self.rxns.append(self.addTranscription(species), ignore_index = 'True')
-
-            # s_str += (label[:-4] +'=0; \n') #Enzyme
-            # self.rxns = self.rxns.append(self.addTranslation(species), ignore_index = 'True')
-
-        # in this loop iterate mechanisms and apply to species. initialize extra species returned 
-        if not pd.isnull(species['Mechanisms']):
-            mechanisms = species['Mechanisms'].split(';')
-            for m in mechanisms:
-                #auto_rxn_str = writeMechanisms(m,s,auto_rxn_str)
-                pass
-            pass
 
         return s_str
 
@@ -151,10 +160,6 @@ class ModelBuilder:
         return '\n' + M.writeEquation() + '; \n' + rate_str+'; '
 
     def writeParameters(self, rxn):
-        '''
-
-
-        '''
         p_str = ''
         if not pd.isnull(rxn['Parameters']):
             #initialize value
@@ -167,20 +172,25 @@ class ModelBuilder:
 
         return p_str
 
-    def compile(self):
-        '''
+    def compile(self) -> str:
+        """
+        Iterates through all species and reactions and generates an Antimony string
 
-
-        '''
-
+        Returns
+        -------
+        str
+            Antimony model string
+        """
         s_str = '# Initialize concentrations \n'
         p_str = '\n# Initialize parameters \n'
         r_str = '# Define specified reactions \n'
 
-        if 'DNA' in self.species['Type']:
-            #how to add species?
-            self.addSpecies('Ribosome', 1, 'Enzyme')
-            self.addSpecies('RNAP', 1, 'Enzyme')
+        S = self.species.copy()
+        for _,s in S.iterrows():
+            if not pd.isnull(s['Mechanisms']):
+                mechanisms = s['Mechanisms'].split(';')
+                for m in mechanisms:
+                        self.applyMechanism(m,s)
 
         for _, sp in self.species.iterrows():
             s_str += self.writeSpecies(sp)
@@ -191,7 +201,14 @@ class ModelBuilder:
 
         return s_str + p_str + r_str
 
-    def saveModel(self, filename):
+    def saveModel(self, filename:str):
+        """
+        Saves the Antimony model to a text file
+
+        Parameters
+        ----------
+        filename : str
+        """
         with open(filename, 'w') as f:
             f.write(self.compile())
 
@@ -202,7 +219,21 @@ class ModelBuilder:
             r = self.rxns[self.rxns['Label'] == id]
         return r
     
-    def get_substrates(self, id, cofactors = True):
+    def get_substrates(self, id: int or str, cofactors = True) -> list:
+        """
+        Returns a list of susbtrates given a reaction index
+
+        Parameters
+        ----------
+        id : int or str
+            Reaction number or label
+        cofactors : bool, optional
+            Also return cofactors, by default True
+
+        Returns
+        -------
+        List
+        """
         r = self.get_reaction(id)
 
         if cofactors and (str(r['Cofactor']) != 'nan'):
@@ -212,6 +243,18 @@ class ModelBuilder:
 
         return list(map(fmt, X))
 
-    def get_products(self, id):
+    def get_products(self, id: int or str) -> list:
+        """
+        Returns a list of products given a reaction index
+
+        Parameters
+        ----------
+        id : int or str
+            Reaction number or label
+
+        Returns
+        -------
+        List
+        """
         r = self.get_reaction(id)
         return list(map(fmt, r['Product'].split(';')))

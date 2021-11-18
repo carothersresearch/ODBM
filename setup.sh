@@ -7,6 +7,7 @@ activate ODBM
 pip install tellurium
 pip install pandas
 pip install xlrd
+pip install overrides
 
 echo " "
 

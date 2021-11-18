@@ -141,7 +141,9 @@ class MichaelisMenten(Mechanism):
     def writeRate(self) -> str:
         S = self.substrates
         E = self.enzyme[0]
-        return self.label +' = '+'kcat_' + self.label + '*'+E+'*'+S[0]+'/('+'Km_' + self.label+' + '+S[0]+')'
+        kcat,Km = [p+'_'+self.label for p in self.required_params]
+
+        return self.label +' = '+ kcat + '*'+E+'*'+S[0]+'/('+Km+' + '+S[0]+')'
     
 class OrderedBisubstrateBiproduct(Mechanism):
     # ordered bisubstrate-biproduct
@@ -158,11 +160,11 @@ class OrderedBisubstrateBiproduct(Mechanism):
     @overrides
     def writeRate(self) -> str:
         S = self.substrates
-        N = self.label
         E = self.enzyme[0]
+        kcat,Km1,Km2,K = [p+'_'+self.label for p in self.required_params]
 
-        return self.label +' = '+'kcat_' + N + '*'+E+'*'+(S[0])+'*'+(S[1])+'/(' \
-                    +(S[0])+'*'+(S[1])+'+ Km1_' + N+'*'+(S[0])+'+ Km2_' + N+'*'+(S[1])+'+ K_' + N+')'
+        return self.label +' = '+kcat+ '*'+E+'*'+(S[0])+'*'+(S[1])+'/(' \
+                    +(S[0])+'*'+(S[1])+'+'+Km1+'*'+(S[0])+'+ '+Km2+'*'+(S[1])+'+'+ K+')'
 
 class MassAction(Mechanism):
     name = 'MA'                                     # name for the mechanism
@@ -194,11 +196,11 @@ class simplifiedOBB(Mechanism):
     @overrides
     def writeRate(self) -> str:
         S = self.substrates
-        N = self.label
         E = self.enzyme[0]
+        kcat,Km1,Km2 = [p+'_'+self.label for p in self.required_params]
 
-        return self.label +' = '+'kcat_' + N + '*'+E+'*'+(S[0])+'*'+(S[1])+'/(' \
-                    +(S[0])+'*'+(S[1])+'+ Km1_' + N+'*'+(S[1])+'+ Km2_' + N+'*'+(S[0])+'+ Km1_' + N+ '*Km2_'+ N+')'
+        return self.label +' = '+ kcat + '*'+E+'*'+(S[0])+'*'+(S[1])+'/(' \
+                    +(S[0])+'*'+(S[1])+'+'+Km1+'*'+(S[1])+'+'+Km2+'*'+(S[0])+'+'+Km1+ '*' +Km2+')'
 
 # class PI(Mechanism):
 class TX_MM(MichaelisMenten):

@@ -1,8 +1,6 @@
 import pandas as pd
 import tellurium as te
-import matplotlib.pyplot as plt
 from buildModelFromExcel import initializeValues, writeReactions
-import matplotlib.pyplot as plt
 
 from odbm.odbm import ModelBuilder
 

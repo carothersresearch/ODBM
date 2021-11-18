@@ -54,11 +54,25 @@ class Modifier(Mechanism):
         return
 
 class LinearCofactor(Modifier):
-
     name = 'LC'                                     
     required_params = ['maxC']                     
     nC = 1
 
     @overrides
     def apply(self, rxn_rate) -> str:
-        return rxn_rate+' * ('+self.cofactors[0]+'/maxC_'+self.label+')'
+        C = self.cofactors[0]
+        maxC = [p+'_'+self.label for p in self.required_params][0]
+
+        return rxn_rate+' * ('+C+'/'+maxC+')'
+
+class HillCofactor(Modifier):
+    name = 'HC'
+    required_params = ['Ka','n']
+    nC = 1
+
+    @overrides
+    def apply(self, rxn_rate: str) -> str:
+        C = self.cofactors[0]
+        Ka,n = [p+'_'+self.label for p in self.required_params]
+
+        return rxn_rate+' * (1/(1+('+Ka+'/'+C+')^'+n+'))'

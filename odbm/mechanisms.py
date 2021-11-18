@@ -2,6 +2,7 @@ from overrides import EnforceOverrides, overrides, final
 from odbm.utils import extractParams, fmt
 import pandas as pd
 import numpy as np
+import re
 
 class InputError(Exception):
     pass
@@ -64,7 +65,7 @@ class Mechanism(EnforceOverrides):
 
         # params
         self.params = extractParams(self.params)
-        if not np.all([p in self.params for p in self.required_params]):
+        if not np.all([np.any([re.match(p,P) for P in self.params]) for p in self.required_params]):
             raise InputError("No "+' or '.join(self.required_params)+" found in parameters for reaction "+self.label)
 
         # cofactor
@@ -91,7 +92,7 @@ class Mechanism(EnforceOverrides):
         # products  
         self.products = self.products.split(';')
         if (not np.isnan(self.nP)) and (len(self.products) != self.nP):
-            raise InputError(str(len(self.products))+' product(s) found for a '+ str(self.nP) + ' product  mechanism in reaction '+self.label)
+            raise InputError(str(len(self.products))+' product(s) found for a '+ str(self.nP) + ' product mechanism in reaction '+self.label)
     
     @final
     def _formatInput(self):

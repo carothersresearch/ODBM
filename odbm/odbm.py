@@ -150,14 +150,14 @@ class ModelBuilder:
         m = rxn['Mechanism'].split(';')
 
         try:
-            M = self.mech_dict[m[0]](rxn)
+            M = self.mech_dict[m[0].strip()](rxn)
         except KeyError:
             # bug here: throws error for no mechanism found even if issue is incorrect parameters
             raise KeyError('No mechanism found called '+m[0])
         
         rate_str = M.writeRate()
         for mod in m[1:]:
-            MOD = self.mech_dict[mod](rxn)
+            MOD = self.mech_dict[mod.strip()](rxn)
             rate_str = MOD.apply(rate_str)
 
         return '\n' + M.writeEquation() + '; \n' + rate_str+'; '

@@ -7,8 +7,9 @@ activate ODBM
 pip install tellurium
 pip install pandas
 pip install xlrd
+pip install openpyxl
 pip install overrides
-pip isntall notebook
+pip install notebook
 
 echo " "
 

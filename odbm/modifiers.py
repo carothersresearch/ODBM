@@ -84,15 +84,15 @@ class Inhibition(Modifier):
     def alpha(a, I, Ki) -> str:
         return a+' = (1 + '+I+'/'+Ki+')'
     
-    def competitve(var: str, a: str): # change just Km
+    def competitive(var: str, a: str): # change just Km
         mod = a+'*'+var
         return var, mod
 
-    def noncompetitve(var: str, a: str): # change just kcat
+    def noncompetitive(var: str, a: str): # change just kcat
         mod = '('+var+'/'+a+')'
         return var, mod
 
-    def uncompetitve(vars: list, a: str): # change both kcat and Km
+    def uncompetitive(vars: list, a: str): # change both kcat and Km
         mods = []
         for v in vars:
             mods.append('('+v+'/'+a+')')
@@ -115,7 +115,7 @@ class ProductInhibition(Inhibition):
             I = self.products[int(id)-1]
             
             Km = 'Km' + id # assuming 1st product inhibits 1st substrate !
-            Km, aKm = self.competitve(Km, a)
+            Km, aKm = self.competitive(Km, a)
 
             rxn_rate = rxn_rate.replace(Km, aKm)
             rxn_rate += '; ' + self.alpha(a, I, Ki)

@@ -11,7 +11,7 @@ def rxn_plot(model:ModelBuilder, sim, rxn_idx = [], figsize = None, titles = Non
 
     f,ax = plt.subplots(1, len(rxn_idx), figsize = figsize, sharey=False)
     for k,r in enumerate(rxn_idx):
-        for j in model.get_substrates(r):
+        for j in model.get_substrates(id = r):
             ax[k].plot(sim['time']/60,sim['['+j+']'], label = j)
             
         for j in model.get_products(r):

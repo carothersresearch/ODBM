@@ -114,7 +114,7 @@ class Mechanism(EnforceOverrides):
         allE = ' + '.join(self.enzyme)
         allP = ' + '.join(self.products)
 
-        if self.enzyme != 'nan':
+        if self.enzyme != 'nan' and self.enzyme != []:
             rxn_str = allS + ' + ' + allE + ' -> ' + allE + ' + '  + allP
         else: 
             rxn_str = allS + ' -> ' + allP
@@ -182,7 +182,7 @@ class MassAction(Mechanism):
             if p[0].isnumeric():
                 p = p[1:]+'^'+p[0]
             rxn_str += '*' + p 
-        if self.enzyme != 'nan':
+        if self.enzyme != 'nan' and self.enzyme != []:
             rxn_str += '*'+(self.enzyme)
 
         return self.label +' = '+rxn_str

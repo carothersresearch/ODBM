@@ -62,7 +62,15 @@ class Mechanism(EnforceOverrides):
     
     @final
     def _processInput(self):
+        """
+        Checks user model definition for errors.
 
+        Raises:
+            InputError: if missing required kinetic parameter for specified mechanism type
+            InputError: if an incorrect number of enzymes, cofactors, substrates, or products are given 
+                        for a specific mechanism type
+
+        """
         # params
         self.params = extractParams(self.params)
         if not np.all([np.any([re.match(p,P) for P in self.params]) for p in self.required_params]):
@@ -96,6 +104,7 @@ class Mechanism(EnforceOverrides):
     
     @final
     def _formatInput(self):
+        #calls fmt function in utils to format input strings to be antimony compatible 
         self.products = list(map(fmt, self.products))
         self.substrates = list(map(fmt, self.substrates))
         self.enzyme = list(map(fmt, self.enzyme))
@@ -105,9 +114,9 @@ class Mechanism(EnforceOverrides):
         """
         Writes chemical equations in form of S + C + E → E + P 
 
-        Returns
+        Returns: 
         -------
-        str
+        rxn_str (str) reaction equation in string format
         """
         
         allS = ' + '.join([*self.substrates,*self.cofactors])
@@ -165,7 +174,7 @@ class OrderedBisubstrateBiproduct(Mechanism):
         kcat,Km1,Km2,K = [p+'_'+self.label for p in self.required_params]
 
         return self.label +' = '+kcat+ '*'+E+'*'+(S[0])+'*'+(S[1])+'/(' \
-                    +(S[0])+'*'+(S[1])+'+'+Km1+'*'+(S[0])+'+ '+Km2+'*'+(S[1])+'+'+ K+')'
+                    +(S[0])+'*'+(S[1])+'+'+Km1+'*'+(S[1])+'+ '+Km2+'*'+(S[0])+'+'+ K+')'
 
 class MassAction(Mechanism):
     name = 'MA'                                     # name for the mechanism

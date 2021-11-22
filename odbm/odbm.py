@@ -32,6 +32,18 @@ class ModelBuilder:
     addReaction(self, Mechanism, Substrate, Product, Parameters, Enzyme = np.nan, Cofactor = np.nan, Label = np.nan):
         Adds a new reaction to the internal reaction dataframe
     
+    applyMechanism(self, mechanism, species):
+        WRITE DESCR
+
+    writeSpecies(self, rxn):
+        WRITE DESCR
+
+    writeReaction(self, rxn):
+        WRITE DESCR
+
+    writeParameters(self, rxn):
+        WRITE DESCR
+
     get_substrates(self, id: int or str, cofactors = True):
         Returns a list of susbtrates given a reaction index
     
@@ -100,6 +112,15 @@ class ModelBuilder:
         self.rxns = self.rxns.append(args,ignore_index = True)
 
     def applyMechanism(self, mechanism, species):
+        """[summary]
+
+        Args:
+            mechanism ([type]): [description]
+            species ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """        
         M = self.mech_dict[mechanism]
         substrate = fmt(species['Label'])
         label = M.generate_label(substrate)
@@ -139,6 +160,14 @@ class ModelBuilder:
         self.addReaction(mechanism, substrate, product, parameters, enzyme, cofactor, Label = label)
 
     def writeSpecies(self, species):
+        """[summary]
+
+        Args:
+            species ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """        
         label = fmt(species['Label'])
         species['Label'] = label
         
@@ -147,6 +176,17 @@ class ModelBuilder:
         return s_str
 
     def writeReaction(self, rxn):
+        """[summary]
+
+        Args:
+            rxn ([type]): [description]
+
+        Raises:
+            KeyError: [description]
+
+        Returns:
+            [type]: [description]
+        """        
         m = rxn['Mechanism'].split(';')
 
         try:
@@ -163,6 +203,14 @@ class ModelBuilder:
         return '\n' + M.writeEquation() + '; \n' + rate_str+'; '
 
     def writeParameters(self, rxn):
+        """[summary]
+
+        Args:
+            rxn ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """        
         p_str = ''
         if not pd.isnull(rxn['Parameters']):
             #initialize value

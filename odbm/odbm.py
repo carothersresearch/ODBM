@@ -3,7 +3,7 @@ from odbm.utils import extractParams, fmt
 
 from odbm.mechanisms import *
 from odbm.modifiers import *
-DEFAULT_MECHANISMS = [  MichaelisMenten, OrderedBisubstrateBiproduct, MassAction, simplifiedOBB,
+DEFAULT_MECHANISMS = [  MichaelisMenten, OrderedBisubstrateBiproduct, MassAction, simplifiedOBB, ConstantRate, Exponential,
                         TX_MM,
                         LinearCofactor, HillCofactor, ProductInhibition
                     ]

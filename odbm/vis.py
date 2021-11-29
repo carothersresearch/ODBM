@@ -39,13 +39,14 @@ def rxn_plot(model:ModelBuilder, sim, rxn_idx, figsize = None, titles = None):
                 ax[k].plot([0,(sim['time']/60)[-1]], [boundary_species, boundary_species], label = j)
 
         for j in model.get_products(r):
-            if '['+j+']'.upper() in sim.colnames:
-                #if species is not in simulation output, it is a boundary species
-                ax[k].plot(sim['time']/60,sim['['+j+']'],'--', label = j)
-            else:
-                #assumes boundary species are defined with a "$", plots horizontal line
-                boundary_species = float(model.species[model.species['Label'] == '$'+j]['StartingConc'])
-                ax[k].plot([0,(sim['time']/60)[-1]], [boundary_species,boundary_species], '--', label = j)
+            if j != '':
+                if '['+j+']'.upper() in sim.colnames:
+                    #if species is not in simulation output, it is a boundary species
+                    ax[k].plot(sim['time']/60,sim['['+j+']'],'--', label = j)
+                else:
+                    #assumes boundary species are defined with a "$", plots horizontal line
+                    boundary_species = float(model.species[model.species['Label'] == '$'+j]['StartingConc'])
+                    ax[k].plot([0,(sim['time']/60)[-1]], [boundary_species,boundary_species], '--', label = j)
 
 
         ax[k].legend()

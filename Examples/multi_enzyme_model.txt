@@ -1,14 +1,14 @@
 # Initialize concentrations 
-SERINE=119.04760000000002; 
+SERINE=4.93095; 
 HCO3=73.5294; 
 PYRUVICACID=0.0; 
 OXALOACETICACID=0.0; 
-$ATP=4.93095; 
+ATP=4.93095; 
 AMP=0.0; 
 ADP=0.0; 
 NADPH=0.0; 
 NADP_plus=0.0; 
-$NADH=7.536950000000001; 
+NADH=7.536950000000001; 
 NAD_plus=0.0; 
 SDA_MSMEG=0.0; 
 SDA_BSUB=0.0; 
@@ -22,6 +22,18 @@ MDH_ECOLI=0.0;
 MDH_MDOM=0.0; 
 MDH_REMER=0.0; 
 MDH_TAES=0.0; 
+SDA_MSMEG_DNA=0.0; 
+SDA_BSUB_DNA=0.0; 
+SDA_ECOLI_DNA=0.0; 
+SDA_LPNEU_DNA=0.0; 
+PCX_RETLI_DNA=0.0; 
+PCX_SCER_DNA=0.0; 
+PCX_MSMEG_DNA=0.0; 
+PCX_GTHERM_DNA=0.0; 
+MDH_ECOLI_DNA=0.0; 
+MDH_MDOM_DNA=0.0; 
+MDH_REMER_DNA=0.0; 
+MDH_TAES_DNA=0.0; 
 
 # Initialize parameters 
 kcat_R1=500; 
@@ -39,22 +51,22 @@ Km_R4=2.2;
 kcat_R5=7.33; 
 Km1_R5=1.65; 
 Km2_R5=10.8; 
-maxC_R5=50; 
+maxC_R5=4; 
 
 kcat_R6=60; 
 Km1_R6=.5; 
 Km2_R6=1.36; 
-maxC_R6=50; 
+maxC_R6=4; 
 
 kcat_R7=33.5; 
 Km1_R7=.375; 
 Km2_R7=3.8; 
-maxC_R7=50; 
+maxC_R7=4; 
 
 kcat_R8=33.5; 
 Km1_R8=.31; 
 Km2_R8=45; 
-maxC_R8=50; 
+maxC_R8=4; 
 
 kcat_R9=931; 
 Km1_R9=04; 
@@ -71,6 +83,48 @@ Km2_R11=.025;
 kcat_R12=121600; 
 Km1_R12=3.23; 
 Km2_R12=0.39; 
+
+k_R13=0.0055; 
+
+k_R14=0.0208; 
+
+k_R15=0.0416; 
+
+Cmax_R16=0.05; 
+tau_R16=14400; 
+
+Cmax_R17=0.05; 
+tau_R17=14400; 
+
+Cmax_R18=0.05; 
+tau_R18=14400; 
+
+Cmax_R19=0.05; 
+tau_R19=14400; 
+
+Cmax_R20=0.05; 
+tau_R20=14400; 
+
+Cmax_R21=0.05; 
+tau_R21=14400; 
+
+Cmax_R22=0.05; 
+tau_R22=14400; 
+
+Cmax_R23=0.05; 
+tau_R23=14400; 
+
+Cmax_R24=0.05; 
+tau_R24=14400; 
+
+Cmax_R25=0.05; 
+tau_R25=14400; 
+
+Cmax_R26=0.05; 
+tau_R26=14400; 
+
+Cmax_R27=0.05; 
+tau_R27=14400; 
 
 # Define specified reactions 
 
@@ -109,3 +163,48 @@ R11 = kcat_R11*MDH_REMER*OXALOACETICACID*NADH/(OXALOACETICACID*NADH+Km1_R11*NADH
 
 R12 : OXALOACETICACID + NADH + MDH_TAES -> MDH_TAES + MALICACID + NAD_plus; 
 R12 = kcat_R12*MDH_TAES*OXALOACETICACID*NADH/(OXALOACETICACID*NADH+Km1_R12*NADH+Km2_R12*OXALOACETICACID+Km1_R12*Km2_R12); 
+
+R13 : SERINE -> ; 
+R13 = k_R13; 
+
+R14 : PYRUVATE -> ; 
+R14 = k_R14; 
+
+R15 : MALATE -> ; 
+R15 = k_R15; 
+
+R16 : SDA_MSMEG_DNA -> SDA_MSMEG; 
+R16 := Cmax_R16/tau_R16*exp(-time/tau_R16)*SDA_MSMEG_DNA; 
+
+R17 : SDA_BSUB_DNA -> SDA_BSUB; 
+R17 := Cmax_R17/tau_R17*exp(-time/tau_R17)*SDA_BSUB_DNA; 
+
+R18 : SDA_ECOLI_DNA -> SDA_ECOLI; 
+R18 := Cmax_R18/tau_R18*exp(-time/tau_R18)*SDA_ECOLI_DNA; 
+
+R19 : SDA_LPNEU_DNA -> SDA_LPNEU; 
+R19 := Cmax_R19/tau_R19*exp(-time/tau_R19)*SDA_LPNEU_DNA; 
+
+R20 : PCX_RETLI_DNA -> PCX_RETLI; 
+R20 := Cmax_R20/tau_R20*exp(-time/tau_R20)*PCX_RETLI_DNA; 
+
+R21 : PCX_SCER_DNA -> PCX_SCER; 
+R21 := Cmax_R21/tau_R21*exp(-time/tau_R21)*PCX_SCER_DNA; 
+
+R22 : PCX_MSMEG_DNA -> PCX_MSMEG; 
+R22 := Cmax_R22/tau_R22*exp(-time/tau_R22)*PCX_MSMEG_DNA; 
+
+R23 : PCX_GTHERM_DNA -> PCX_GTHERM; 
+R23 := Cmax_R23/tau_R23*exp(-time/tau_R23)*PCX_GTHERM_DNA; 
+
+R24 : MDH_ECOLI_DNA -> MDH_ECOLI; 
+R24 := Cmax_R24/tau_R24*exp(-time/tau_R24)*MDH_ECOLI_DNA; 
+
+R25 : MDH_MDOM_DNA -> MDH_MDOM; 
+R25 := Cmax_R25/tau_R25*exp(-time/tau_R25)*MDH_MDOM_DNA; 
+
+R26 : MDH_REMER_DNA -> MDH_REMER; 
+R26 := Cmax_R26/tau_R26*exp(-time/tau_R26)*MDH_REMER_DNA; 
+
+R27 : MDH_TAES_DNA -> MDH_TAES; 
+R27 := Cmax_R27/tau_R27*exp(-time/tau_R27)*MDH_TAES_DNA; 

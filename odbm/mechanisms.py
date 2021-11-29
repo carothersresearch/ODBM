@@ -196,6 +196,23 @@ class MassAction(Mechanism):
 
         return self.label +' = '+rxn_str
 
+class ConstantRate(Mechanism):
+    name = 'CR'
+    required_parameters = ['k']
+
+    @overrides
+    def writeRate(self) -> str:
+        return self.label +' = k_'+self.label
+
+class Exponential(Mechanism):
+    name = 'EXP'
+    required_params = ['Cmax','tau']
+
+    @overrides
+    def writeRate(self) -> str:
+        Cmax, tau = [p+'_'+self.label for p in self.required_params]
+        return self.label + ' := '+Cmax+'/'+tau+'*exp(-time/'+tau+')*'+self.substrates[0]
+
 class simplifiedOBB(Mechanism):
     name = 'SOBB'                                     # name for the mechanism
     required_params = ['kcat', 'Km1', 'Km2']    # list of required parameters

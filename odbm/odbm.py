@@ -33,16 +33,16 @@ class ModelBuilder:
         Adds a new reaction to the internal reaction dataframe
     
     applyMechanism(self, mechanism, species):
-        WRITE DESCR
+        Adds TX or TL reaction to dataframe
 
     writeSpecies(self, rxn):
-        WRITE DESCR
+        Write string for species initialization
 
     writeReaction(self, rxn, equation = True):
-        WRITE DESCR
+        Writes string for reaction definition
 
-    writeParameters(self, rxn):
-        WRITE DESCR
+    writeParameters(self, parameters, label):
+        Write string for parameter initialization
 
     get_substrates(self, id: int or str, cofactors = True):
         Returns a list of susbtrates given a reaction index
@@ -87,9 +87,12 @@ class ModelBuilder:
         """
         args = locals()
         args.pop('self')
-        # maybe check inputs??
-        if not self.species['Label'].str.contains(Label).any():
+                # maybe check inputs??
+
+        if not self.species['Label'].str.contains(Label).any(): #if this species does not already exist
             self.species = self.species.append(args,ignore_index = True) 
+        else:
+            raise('This species already exists in dataframe.')
 
     def addReaction(self, Mechanism, Substrate, Product, Parameters, Enzyme = np.nan, Cofactor = np.nan, Label = np.nan):
         """
@@ -115,11 +118,11 @@ class ModelBuilder:
         """[summary]
 
         Args:
-            mechanism ([type]): [description]
-            species ([type]): [description]
+            mechanism (str): label for mechanism 
+            species (str): species names
 
         Returns:
-            [type]: [description]
+            None
         """        
         M = self.mech_dict[mechanism]
         substrate = fmt(species['Label'])
@@ -165,13 +168,13 @@ class ModelBuilder:
             return M.writeFun(substrate, M.required_params, label)
 
     def writeSpecies(self, species):
-        """[summary]
+        """Write string for species initialization
 
         Args:
-            species ([type]): [description]
+            species (dict): contains Label, StartingConc
 
         Returns:
-            [type]: [description]
+            str: initialized species
         """        
         label = fmt(species['Label'])
         species['Label'] = label
@@ -186,16 +189,16 @@ class ModelBuilder:
         return s_str
 
     def writeReaction(self, rxn, equation = True):
-        """[summary]
+        """Writes string for reaction definition
 
         Args:
-            rxn ([type]): [description]
+            rxn (dict): contains species, products, mechanism, parameters
 
         Raises:
-            KeyError: [description]
+            KeyError: No mechanism found with that name
 
         Returns:
-            [type]: [description]
+            str: reaction definition
         """        
         m = rxn['Mechanism'].split(';')
 
@@ -218,13 +221,16 @@ class ModelBuilder:
         return rxn_str
 
     def writeParameters(self, parameters, label, required = True):
-        """[summary]
+        """Write string for parameter initialization
+
 
         Args:
-            rxn ([type]): [description]
+            parameters
+            label
+            required
 
         Returns:
-            [type]: [description]
+            str: initialized parameters
         """        
         p_str = ''
         if not pd.isnull(parameters):

@@ -38,7 +38,7 @@ class ModelBuilder:
     writeSpecies(self, rxn):
         WRITE DESCR
 
-    writeReaction(self, rxn):
+    writeReaction(self, rxn, equation = True):
         WRITE DESCR
 
     writeParameters(self, rxn):
@@ -111,7 +111,7 @@ class ModelBuilder:
         # maybe do something about the Label        
         self.rxns = self.rxns.append(args,ignore_index = True)
 
-    def applyMechanism(self, mechanism, species):
+    def applyMechanism(self, mechanism, species, function = False):
         """[summary]
 
         Args:
@@ -124,7 +124,7 @@ class ModelBuilder:
         M = self.mech_dict[mechanism]
         substrate = fmt(species['Label'])
         label = M.generate_label(substrate)
-        product = M.generate_product(substrate)
+        self.species[self.species['Label'] == species['Label']]=label              
         parameters = species['Parameters']
         pdict = extractParams(parameters)
 
@@ -153,11 +153,16 @@ class ModelBuilder:
                 self.addSpecies(c, lookup(c))
         else:
             cofactor = np.nan
+        
+        if not function: 
+            product = M.generate_product(substrate)
+            for p in product.split(';'):
+                self.addSpecies(p, lookup(p))
 
-        for p in product.split(';'):
-            self.addSpecies(p, lookup(p))
+            self.addReaction(mechanism, substrate, product, parameters, enzyme, cofactor, Label = label)
 
-        self.addReaction(mechanism, substrate, product, parameters, enzyme, cofactor, Label = label)
+        else:
+            return M.writeFun(substrate, M.required_params, label)
 
     def writeSpecies(self, species):
         """[summary]
@@ -172,10 +177,15 @@ class ModelBuilder:
         species['Label'] = label
         
         s_str = (label +'=' + str(species['StartingConc']) + '; \n')
+        
+        if not pd.isnull(species['Conc']):
+                funs = species['Conc'].split(';')
+                for f in funs:
+                        s_str += self.applyMechanism(f,species, True)+'; \n' # not mechanism, just function   
 
         return s_str
 
-    def writeReaction(self, rxn):
+    def writeReaction(self, rxn, equation = True):
         """[summary]
 
         Args:
@@ -200,9 +210,14 @@ class ModelBuilder:
             MOD = self.mech_dict[mod.strip()](rxn)
             rate_str = MOD.apply(rate_str)
 
-        return '\n' + M.writeEquation() + '; \n' + rate_str+'; '
+        if equation:
+            rxn_str = '\n' + M.writeEquation() + '; \n' + rate_str+'; '
+        else:
+            rxn_str = '\n' + rate_str+'; '
 
-    def writeParameters(self, rxn):
+        return rxn_str
+
+    def writeParameters(self, parameters, label, required = True):
         """[summary]
 
         Args:
@@ -212,13 +227,16 @@ class ModelBuilder:
             [type]: [description]
         """        
         p_str = ''
-        if not pd.isnull(rxn['Parameters']):
+        if not pd.isnull(parameters):
             #initialize value
-            kdict = extractParams(rxn['Parameters'])
+            kdict = extractParams(parameters)
             for key, value in kdict.items():
-                p_str += (key+'_'+rxn['Label'] +'=' + str(value) + '; \n')
+                p_str += (key+'_'+label +'=' + str(value) + '; \n')
         else:
-            raise('No parameters found for reaction '+rxn['Label'])
+            if required:
+                raise('No parameters found for reaction '+label)
+            else:
+                pass
             # Diego: what about default parameters? say if we want to set all transcription rates to be the same
 
         return p_str
@@ -245,9 +263,10 @@ class ModelBuilder:
 
         for _, sp in self.species.iterrows():
             s_str += self.writeSpecies(sp)
+            s_str += self.writeParameters(sp['Parameters'], sp['Label'], required = False) + '\n'
 
         for _, rxn in self.rxns.iterrows():
-            p_str += self.writeParameters(rxn) + '\n'
+            p_str += self.writeParameters(rxn['Parameters'], rxn['Label']) + '\n'
             r_str += self.writeReaction(rxn) + '\n'
 
         return s_str + p_str + r_str

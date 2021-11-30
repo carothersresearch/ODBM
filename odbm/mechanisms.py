@@ -207,11 +207,11 @@ class ConstantRate(Mechanism):
 class Exponential(Mechanism):
     name = 'EXP'
     required_params = ['Cmax','tau']
+    generate_label = lambda l: l
 
-    @overrides
-    def writeRate(self) -> str:
-        Cmax, tau = [p+'_'+self.label for p in self.required_params]
-        return self.label + ' := '+Cmax+'/'+tau+'*exp(-time/'+tau+')*'+self.substrates[0]
+    def writeFun(var, parameters, label) -> str:
+        Cmax, tau = [p+'_'+label for p in parameters]
+        return var + ' := '+Cmax+'*(1-exp(-time/'+tau+'))'
 
 class simplifiedOBB(Mechanism):
     name = 'SOBB'                                     # name for the mechanism

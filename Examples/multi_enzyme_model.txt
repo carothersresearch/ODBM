@@ -1,13 +1,15 @@
 # Initialize concentrations 
-SERINE=0.0; 
+SERINE=4.93095; 
 
-HCO3=0.0; 
+HCO3=73.5294; 
 
 PYRUVICACID=0.0; 
 
+MALICACID=0.0; 
+
 OXALOACETICACID=0.0; 
 
-ATP=0.0; 
+ATP=4.93095; 
 
 AMP=0.0; 
 
@@ -17,68 +19,68 @@ NADPH=0.0;
 
 NADP_plus=0.0; 
 
-NADH=0.0; 
+NADH=7.536950000000001; 
 
 NAD_plus=0.0; 
 
 SDA_MSMEG=0.0; 
 SDA_MSMEG := Cmax_SDA_MSMEG*(1-exp(-time/tau_SDA_MSMEG)); 
-Cmax_SDA_MSMEG=0.05; 
+Cmax_SDA_MSMEG=0.00; 
 tau_SDA_MSMEG=14400; 
 
 SDA_BSUB=0.0; 
 SDA_BSUB := Cmax_SDA_BSUB*(1-exp(-time/tau_SDA_BSUB)); 
-Cmax_SDA_BSUB=0.05; 
+Cmax_SDA_BSUB=0.00; 
 tau_SDA_BSUB=14400; 
 
 SDA_ECOLI=0.0; 
 SDA_ECOLI := Cmax_SDA_ECOLI*(1-exp(-time/tau_SDA_ECOLI)); 
-Cmax_SDA_ECOLI=0.05; 
+Cmax_SDA_ECOLI=0.00; 
 tau_SDA_ECOLI=14400; 
 
 SDA_LPNEU=0.0; 
 SDA_LPNEU := Cmax_SDA_LPNEU*(1-exp(-time/tau_SDA_LPNEU)); 
-Cmax_SDA_LPNEU=0.05; 
+Cmax_SDA_LPNEU=0.00; 
 tau_SDA_LPNEU=14400; 
 
 PCX_RETLI=0.0; 
 PCX_RETLI := Cmax_PCX_RETLI*(1-exp(-time/tau_PCX_RETLI)); 
-Cmax_PCX_RETLI=0.05; 
+Cmax_PCX_RETLI=0.00; 
 tau_PCX_RETLI=14400; 
 
 PCX_SCER=0.0; 
 PCX_SCER := Cmax_PCX_SCER*(1-exp(-time/tau_PCX_SCER)); 
-Cmax_PCX_SCER=0.05; 
+Cmax_PCX_SCER=0.00; 
 tau_PCX_SCER=14400; 
 
 PCX_MSMEG=0.0; 
 PCX_MSMEG := Cmax_PCX_MSMEG*(1-exp(-time/tau_PCX_MSMEG)); 
-Cmax_PCX_MSMEG=0.05; 
+Cmax_PCX_MSMEG=0.00; 
 tau_PCX_MSMEG=14400; 
 
 PCX_GTHERM=0.0; 
 PCX_GTHERM := Cmax_PCX_GTHERM*(1-exp(-time/tau_PCX_GTHERM)); 
-Cmax_PCX_GTHERM=0.05; 
+Cmax_PCX_GTHERM=0.00; 
 tau_PCX_GTHERM=14400; 
 
 MDH_ECOLI=0.0; 
 MDH_ECOLI := Cmax_MDH_ECOLI*(1-exp(-time/tau_MDH_ECOLI)); 
-Cmax_MDH_ECOLI=0.05; 
+Cmax_MDH_ECOLI=0.00; 
 tau_MDH_ECOLI=14400; 
 
 MDH_MDOM=0.0; 
 MDH_MDOM := Cmax_MDH_MDOM*(1-exp(-time/tau_MDH_MDOM)); 
-Cmax_MDH_MDOM=0.05; 
+Cmax_MDH_MDOM=0.00; 
 tau_MDH_MDOM=14400; 
 
 MDH_REMER=0.0; 
 MDH_REMER := Cmax_MDH_REMER*(1-exp(-time/tau_MDH_REMER)); 
-Cmax_MDH_REMER=0.05; 
+Cmax_MDH_REMER=0.00; 
 tau_MDH_REMER=14400; 
 
 MDH_TAES=0.0; 
 MDH_TAES := Cmax_MDH_TAES*(1-exp(-time/tau_MDH_TAES)); 
-Cmax_MDH_TAES=0.05; 
+Cmax_MDH_TAES=0.00; 
 tau_MDH_TAES=14400; 
 
 
@@ -131,11 +133,11 @@ kcat_R12=121600;
 Km1_R12=3.23; 
 Km2_R12=0.39; 
 
-k_R13=0.0055; 
+k_R13=0.082; 
 
-k_R14=0.0208; 
+k_R14=0.106; 
 
-k_R15=0.0416; 
+k_R15=0.012; 
 
 # Define specified reactions 
 
@@ -176,10 +178,10 @@ R12 : OXALOACETICACID + NADH + MDH_TAES -> MDH_TAES + MALICACID + NAD_plus;
 R12 = kcat_R12*MDH_TAES*OXALOACETICACID*NADH/(OXALOACETICACID*NADH+Km1_R12*NADH+Km2_R12*OXALOACETICACID+Km1_R12*Km2_R12); 
 
 R13 : SERINE -> ; 
-R13 = k_R13; 
+R13 = k_R13*SERINE; 
 
-R14 : PYRUVATE -> ; 
-R14 = k_R14; 
+R14 : PYRUVICACID -> ; 
+R14 = k_R14*PYRUVICACID; 
 
-R15 : MALATE -> ; 
-R15 = k_R15; 
+R15 : MALICACID -> ; 
+R15 = k_R15*MALICACID; 

@@ -1,4 +1,7 @@
 import pandas as pd
+import itertools
+import tellurium as te
+
 from odbm.utils import extractParams, fmt
 
 from odbm.mechanisms import *
@@ -334,3 +337,46 @@ class ModelBuilder:
         """
         r = self.get_reaction(id)
         return list(map(fmt, r['Product'].split(';')))
+
+class ModelHandler:
+    def __init__(self, model) -> None:
+        self.model = model
+        self.rr = te.loada(model)
+        self.ParameterScan = {}
+        self.setSimParams = False # need function?
+    
+    def setParameterScan(self, parameters_dict: dict):
+        if np.all([p in self.rr.getGlobalParameterIds()+
+                            self.rr.getDependentFloatingSpeciesIds()+
+                                self.rr.getIndependentFloatingSpeciesIds() for p in parameters_dict.keys()]):
+
+            if np.all([iter(v) for v in parameters_dict.values()]):
+                self.ParameterScan = parameters_dict
+            else:
+                raise Exception('Not iterable')
+        else:
+            raise Exception('No parameter found')
+
+
+    def sensitivityAnalysis(self, metric = None):
+        if not self.setSimParams:
+            print('Need to specify simulation parameters')
+            return
+
+        conditions = list(itertools.product(*self.ParameterScan.values()))
+        parameters = self.ParameterScan.keys()
+        results = [None]*len(conditions)
+
+        for k,c in enumerate(conditions):
+            self.rr.resetAll()
+
+            for p,v in zip(parameters,c):
+                self.rr[p]=v
+
+            sol = self.rr.simulate()
+            if metric:
+                sol = metric(sol)
+            
+            results[k] = sol
+
+        return results

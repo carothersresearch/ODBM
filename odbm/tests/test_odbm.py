@@ -2,7 +2,7 @@
 import unittest
 import numpy as np
 from odbm.odbm import *
-
+import itertools
 
 class Test_ModelBuilder(unittest.TestCase):
     """Unit test for ModelBuilder parent class"""
@@ -14,7 +14,7 @@ class Test_ModelBuilder(unittest.TestCase):
     
         # check to make sure necessary attributes are inputted
         self.assertTrue(self.subject.species is not None)
-        self.assertTrue(self.subject.species is not None)
+        self.assertTrue(self.subject.rxns is not None)
         self.assertFalse(self.subject.mech_dict)
     
     def test_addMechanism(self):
@@ -44,20 +44,59 @@ class Test_ModelBuilder(unittest.TestCase):
 
 class Test_ModelHandler(unittest.TestCase):
     def test__init__(self):
+        self.MB = ModelBuilder()
+        modelfile = 'test_model.txt'
+        self.MB.saveModel(modelfile)
+        models = [self.MB, modelfile] # maybe only allow for MB
+
+        for m in models:
+            self.MH = ModelHandler(m)
+            
         pass
 
     def test_setBoundarySpecies(self):
-        pass
+        species_present = ['A','B']
+        species_not_present = ['C']
+
+        self.MH.setBoundarySpecies(species_present)
+        self.assertTrue(self.MH.model.species['Label'].str.contains('$').any())
+
+        try:
+            self.MH.setBoundarySpecies(species_not_present)
+        except Exception as exception:
+            self.assertEqual(isinstance(exception,Exception), True)
+
 
     def test_setConcentrations(self):
-        pass
+        species_present = {'A':10,'B':10}
+        species_not_present = {'C':1}
 
+        self.MH.setConcentrations(species_present)
+
+        self.assertTrue(np.all([self.MH.rr[k] == v for k,v in species_present.items()]))
+
+        # self.assertTrue(np.all([self.MH.model.species[self.MH.model.species['Label'] == k]['StartingConC'] == v for k,v in species_present.items()]))
+
+        try:
+            self.MH.setConcentrations(species_not_present)
+        except Exception as exception:
+            self.assertEqual(isinstance(exception,Exception), True)
+        
+    def test_setParameterScan(self):
+        norm = np.random.normal(10,3,100)
+        scan_dict = {'k_R1':[0,1,2], 'k_R2':norm} # can be 'descrete' or 'continuous'
+
+        self.MH.setParameterScan(scan_dict)
+        
+        try:
+            self.MH.setParameterScan({'dummy':0})
+        except Exception as exception:
+            self.assertEqual(isinstance(exception,Exception), True)
+        pass
+    
     def test_senstivityAnalysis(self):
         pass
 
-    def test_setSimulationConditions(self):
-        pass
-    
     def test_run(self):
         pass
 

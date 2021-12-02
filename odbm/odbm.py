@@ -363,7 +363,7 @@ class ModelHandler:
             print('Need to specify simulation parameters')
             return
 
-        conditions = list(itertools.product(*self.ParameterScan.values()))
+        conditions = np.array(list(self.ParameterScan.values()))# list(itertools.product(*self.ParameterScan.values()))
         parameters = self.ParameterScan.keys()
         results = [None]*len(conditions)
 

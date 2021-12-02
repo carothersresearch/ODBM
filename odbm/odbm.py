@@ -343,7 +343,7 @@ class ModelHandler:
         self.model = model
         self.rr = te.loada(model)
         self.ParameterScan = {}
-        self.setSimParams = False # need function?
+        self.SimParams = {}
     
     def setParameterScan(self, parameters_dict: dict):
         if np.all([p in self.rr.getGlobalParameterIds()+
@@ -357,13 +357,18 @@ class ModelHandler:
         else:
             raise Exception('No parameter found')
 
+    def setSimParams(self,start,end,points,selections):
+        self.SimParams['start'] = start
+        self.SimParams['end'] = end
+        self.SimParams['points'] = points
+        self.SimParams['selections'] = selections
 
     def sensitivityAnalysis(self, metric = None):
-        if not self.setSimParams:
+        if not self.SimParams:
             print('Need to specify simulation parameters')
             return
 
-        conditions = np.array(list(self.ParameterScan.values()))# list(itertools.product(*self.ParameterScan.values()))
+        conditions = np.array(list(self.ParameterScan.values())).T # list(itertools.product(*self.ParameterScan.values()))
         parameters = self.ParameterScan.keys()
         results = [None]*len(conditions)
 
@@ -373,7 +378,7 @@ class ModelHandler:
             for p,v in zip(parameters,c):
                 self.rr[p]=v
 
-            sol = self.rr.simulate()
+            sol = self.rr.simulate(self.SimParams['start'],self.SimParams['end'],self.SimParams['points'],self.SimParams['selections'])
             if metric:
                 sol = metric(sol)
             

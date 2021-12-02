@@ -54,6 +54,7 @@ class Mechanism(EnforceOverrides):
             self.cofactors = rxn['Cofactor']
             self.params = rxn['Parameters']
             self.label = rxn['Label']
+
         except:
             raise KeyError("Missing Reaction fields")
 

@@ -7,6 +7,11 @@ def extractParams(param_str):
     Returns:
         2. mydict (dict) with format {k1: 10, k2:20}
     """
+    #default parameters?
+    if ',' in param_str:
+        raise NameError(' , is an invalid character for parameter string.')
+    if ':' not in param_str:
+        raise NameError('No parameters found.')
     mydict = {}
     mystr = param_str.split(';')
     for s in mystr:

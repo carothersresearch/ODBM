@@ -1,5 +1,5 @@
 from overrides import EnforceOverrides, overrides, final
-from odbm.utils import extractParams, fmt
+from odbm.utils import extractParams, fmt, getStoich
 import pandas as pd
 import numpy as np
 import re
@@ -129,6 +129,10 @@ class Mechanism(EnforceOverrides):
         else: 
             rxn_str = allS + ' -> ' + allP
 
+        self.stoich = [getStoich(s)[0] for s in self.substrates]
+        self.substrates = [getStoich(s)[1] for s in self.substrates]
+        self.products = [getStoich(s)[1] for s in self.substrates]
+
         return self.label +' : '+rxn_str
     
     def writeRate(self) -> str:
@@ -187,15 +191,32 @@ class MassAction(Mechanism):
     # mass action kinetics
     @overrides
     def writeRate(self) -> str:
-        rxn_str = 'k_' + self.label
-        for p in self.substrates:
-            if p[0].isnumeric():
-                p = p[1:]+'^'+p[0]
-            rxn_str += '*' + p 
-        if self.enzyme != 'nan' and self.enzyme != []:
-            rxn_str += '*'+(self.enzyme)
+        S = self.substrates
+        pow = self.stoich
 
-        return self.label +' = '+rxn_str
+        k, = [p+'_'+self.label if '$' not in p else p.replace('$','_') for p in self.params]
+
+        allS = '*'.join([s+'^'+c if len(c)>0 else s for s,c in zip(S,pow)])
+        allE = '*'.join(self.enzyme)
+        if len(allE)>0: allE='*'+allE
+
+        return self.label +' = '+ k+'*'+allS+allE
+
+class MonoMassAction(Mechanism): # no superscipt
+    name = 'MMA'                                     # name for the mechanism
+    required_params = ['k']                         # list of required parameters
+    nS = np.nan                                     # number of required substrates 
+    nP = np.nan                                     # number of required products 
+    nE = np.nan
+
+    @overrides
+    def writeRate(self) -> str:
+        allS = '*'.join(self.substrates)
+        allE = '*'.join(self.enzyme)
+        if len(allE)>0: allE='*'+allE
+
+        k, = [p+'_'+self.label if '$' not in p else p.replace('$','_') for p in self.params]
+        return self.label + ' = ' + k+'*'+allS+allE
 
 class ConstantRate(Mechanism):
     name = 'CR'

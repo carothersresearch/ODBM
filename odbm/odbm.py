@@ -7,7 +7,7 @@ from odbm.utils import extractParams, fmt
 from odbm.mechanisms import *
 from odbm.modifiers import *
 DEFAULT_MECHANISMS = [  MichaelisMenten, OrderedBisubstrateBiproduct, MassAction, simplifiedOBB, ConstantRate, Exponential,
-                        TX_MM,
+                        MonoMassAction, TX_MM,
                         LinearCofactor, HillCofactor, ProductInhibition
                     ]
 
@@ -211,17 +211,15 @@ class ModelBuilder:
             # bug here: throws error for no mechanism found even if issue is incorrect parameters
             raise KeyError('No mechanism found called '+m[0])
         
+        if equation: eq_str = M.writeEquation()+'; \n'
+        else: eq_str = ''
+
         rate_str = M.writeRate()
         for mod in m[1:]:
             MOD = self.mech_dict[mod.strip()](rxn)
             rate_str = MOD.apply(rate_str)
 
-        if equation:
-            rxn_str = '\n' + M.writeEquation() + '; \n' + rate_str+'; '
-        else:
-            rxn_str = '\n' + rate_str+'; '
-
-        return rxn_str
+        return '\n' + eq_str + rate_str+'; '
 
     def writeParameters(self, parameters, label, required = True):
         """Write string for parameter initialization
@@ -238,16 +236,24 @@ class ModelBuilder:
         p_str = ''
         if not pd.isnull(parameters):
             #initialize value
-            kdict = extractParams(parameters)
-            for key, value in kdict.items():
-                p_str += (key+'_'+label +'=' + str(value) + '; \n')
+            pdict = extractParams(parameters)
+            for key, value in pdict.items():
+
+                if '$' in key:
+                    key = key.replace('$','_')
+                else:
+                    key = key+'_'+label
+
+                if key not in self.p_str:
+                    p_str += (key +'=' + str(value) + '; \n')
         else:
             if required:
                 raise('No parameters found for reaction '+label)
             else:
                 pass
             # Diego: what about default parameters? say if we want to set all transcription rates to be the same
-
+            
+        if len(p_str)>0:p_str =p_str+'\n'
         return p_str
 
     def compile(self) -> str:
@@ -259,9 +265,9 @@ class ModelBuilder:
         str
             Antimony model string
         """
-        s_str = '# Initialize concentrations \n'
-        p_str = '\n# Initialize parameters \n'
-        r_str = '# Define specified reactions \n'
+        self.s_str = '# Initialize concentrations \n'
+        self.p_str = '\n# Initialize parameters \n'
+        self.r_str = '# Define specified reactions \n'
 
         S = self.species.copy()
         for _,s in S.iterrows():
@@ -271,14 +277,14 @@ class ModelBuilder:
                         self.applyMechanism(m,s)
 
         for _, sp in self.species.iterrows():
-            s_str += self.writeSpecies(sp)
-            s_str += self.writeParameters(sp['Parameters'], sp['Label'], required = False) + '\n'
+            self.s_str += self.writeSpecies(sp)
+            self.s_str += self.writeParameters(sp['Parameters'], sp['Label'], required = False)
 
         for _, rxn in self.rxns.iterrows():
-            p_str += self.writeParameters(rxn['Parameters'], rxn['Label']) + '\n'
-            r_str += self.writeReaction(rxn) + '\n'
+            self.p_str += self.writeParameters(rxn['Parameters'], rxn['Label'])
+            self.r_str += self.writeReaction(rxn) + '\n'
 
-        return s_str + p_str + r_str
+        return self.s_str + self.p_str + self.r_str
 
     def saveModel(self, filename:str):
         """

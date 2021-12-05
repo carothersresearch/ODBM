@@ -252,7 +252,7 @@ class ModelBuilder:
             else:
                 pass
             # Diego: what about default parameters? say if we want to set all transcription rates to be the same
-            
+
         if len(p_str)>0:p_str =p_str+'\n'
         return p_str
 
@@ -369,25 +369,31 @@ class ModelHandler:
         self.SimParams['points'] = points
         self.SimParams['selections'] = selections
 
-    def sensitivityAnalysis(self, metric = None):
+    def sensitivityAnalysis(self, metrics = []):
         if not self.SimParams:
             print('Need to specify simulation parameters')
             return
 
-        conditions = np.array(list(self.ParameterScan.values())).T # list(itertools.product(*self.ParameterScan.values()))
+        self.conditions = np.array(list(self.ParameterScan.values())).T # list(itertools.product(*self.ParameterScan.values()))
         parameters = self.ParameterScan.keys()
-        results = [None]*len(conditions)
+        results = [None]*len(self.conditions)
 
-        for k,c in enumerate(conditions):
+        if metrics:
+            results_metrics = np.empty(shape = (len(self.conditions), len(metrics)))
+        
+        for k,c in enumerate(self.conditions):
             self.rr.resetAll()
 
             for p,v in zip(parameters,c):
                 self.rr[p]=v
 
             sol = self.rr.simulate(self.SimParams['start'],self.SimParams['end'],self.SimParams['points'],self.SimParams['selections'])
-            if metric:
-                sol = metric(sol)
-            
+            for j,m in enumerate(metrics):
+                results_metrics[k,j] = m(sol)
+
             results[k] = sol
 
-        return results
+        if metrics:
+            return results, results_metrics
+        else:
+            return results

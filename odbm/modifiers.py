@@ -85,7 +85,7 @@ class Inhibition(Modifier):
         return var, mod
 
     def inverse_linear(self, var: str, C: str, maxC: str):
-        mod = var+' * (1-'+C+'/'+maxC+')'
+        mod = var+' * (1-'+C+'/'+maxC+')*piecewise(1, '+C+'<'+ maxC+', 0)'
         return var, mod 
 
 class ProductInhibition(Inhibition):

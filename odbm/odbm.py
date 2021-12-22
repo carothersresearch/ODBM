@@ -8,7 +8,7 @@ from odbm.mechanisms import *
 from odbm.modifiers import *
 DEFAULT_MECHANISMS = [  MichaelisMenten, OrderedBisubstrateBiproduct, MassAction, simplifiedOBB, ConstantRate, Exponential,
                         MonoMassAction, TX_MM,
-                        LinearCofactor, HillCofactor, ProductInhibition
+                        LinearCofactor, HillCofactor, ProductInhibition, SimpleProductInhibition
                     ]
 
 class ModelBuilder:
@@ -351,6 +351,15 @@ class ModelHandler:
         self.ParameterScan = {}
         self.SimParams = {}
     
+    def setConstantParams(self, parameters_dict: dict):
+        if np.all([p in self.rr.getGlobalParameterIds()+
+                            self.rr.getDependentFloatingSpeciesIds()+
+                                self.rr.getIndependentFloatingSpeciesIds() for p in parameters_dict.keys()]):
+
+            self.ConstantParams = parameters_dict
+        else:
+            raise Exception('No parameter found')
+
     def setParameterScan(self, parameters_dict: dict):
         if np.all([p in self.rr.getGlobalParameterIds()+
                             self.rr.getDependentFloatingSpeciesIds()+
@@ -384,14 +393,20 @@ class ModelHandler:
         for k,c in enumerate(self.conditions):
             self.rr.resetAll()
 
+            for p,v in self.ConstantParams.items():
+                self.rr[p]=v
+
             for p,v in zip(parameters,c):
                 self.rr[p]=v
 
-            sol = self.rr.simulate(self.SimParams['start'],self.SimParams['end'],self.SimParams['points'],self.SimParams['selections'])
-            for j,m in enumerate(metrics):
-                results_metrics[k,j] = m(sol)
+            try:
+                sol = self.rr.simulate(self.SimParams['start'],self.SimParams['end'],self.SimParams['points'],self.SimParams['selections'])
+                for j,m in enumerate(metrics):
+                    results_metrics[k,j] = m(sol)
 
-            results[k] = sol
+                results[k] = sol
+            except:
+                pass
 
         if metrics:
             return results, results_metrics

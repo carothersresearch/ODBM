@@ -32,8 +32,13 @@ def formatSpecies(x, find, replace):
     """
 
     x = x.upper()
-    if x[0].isnumeric() and x[1] != ' ':
-        x = 'z'+x 
+
+    try:
+        if getStoich(x)[0][-1].isnumeric() and getStoich(x)[1][0] != ' ':
+            x = 'z'+x
+    except:
+        pass
+
     for f,r in zip(find,replace):
         x = x.replace(f,r)
     x = x.strip()
@@ -45,6 +50,8 @@ fmt = lambda x: formatSpecies(x, FIND, REPLACE)
 
 def getStoich(sp):
     i = 0
-    while sp[i].isnumeric():
-        i+=1
+    if len(sp)>0:
+        while sp[i].isnumeric():
+            i+=1
+
     return sp[:i], sp[i:]

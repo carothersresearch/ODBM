@@ -74,6 +74,8 @@ class Mechanism(EnforceOverrides):
         """
         # params
         self.params = extractParams(self.params)
+        self.relevent_params = sum([[P for P in self.params if re.match(p,P) ] for p in self.required_params],[])
+
         if not np.all([np.any([re.match(p,P) for P in self.params]) for p in self.required_params]):
             raise InputError("No "+' or '.join(self.required_params)+" found in parameters for reaction "+self.label)
 
@@ -94,14 +96,17 @@ class Mechanism(EnforceOverrides):
             raise InputError(str(len(self.enzyme))+' enzyme(s) found for a '+ str(self.nE) + ' enzyme mechanism in reaction '+self.label)
 
         # substrates
-        self.substrates = self.substrates.split(';')
+        if str(self.substrates) != 'nan':
+            self.substrates = self.substrates.split(';')
+        else:
+            self.substrates = []
         if len(self.substrates) != self.nS and np.isnan(self.nS) == False:
             raise InputError(str(len(self.substrates))+' substrate(s) found for a '+ str(self.nS) + ' substrate mechanism in reaction '+self.label)
 
-        # products  
+        # products 
         self.products = self.products.split(';')
         if (not np.isnan(self.nP)) and (len(self.products) != self.nP):
-            raise InputError(str(len(self.products))+' product(s) found for a '+ str(self.nP) + ' product mechanism in reaction '+self.label)
+            raise InputError(str(len(self.products))+' product(s) ('+str(self.products)+') found for a '+ str(self.nP) + ' product mechanism in reaction '+self.label)
     
     @final
     def _formatInput(self):
@@ -131,7 +136,7 @@ class Mechanism(EnforceOverrides):
 
         self.stoich = [getStoich(s)[0] for s in self.substrates]
         self.substrates = [getStoich(s)[1] for s in self.substrates]
-        self.products = [getStoich(s)[1] for s in self.substrates]
+        self.products = [getStoich(s)[1] for s in self.products]
 
         return self.label +' : '+rxn_str
     
@@ -156,7 +161,7 @@ class MichaelisMenten(Mechanism):
     def writeRate(self) -> str:
         S = self.substrates
         E = self.enzyme[0]
-        kcat,Km = [p+'_'+self.label for p in self.required_params]
+        kcat,Km = [p+'_'+self.label for p in self.relevent_params]
 
         return self.label +' = '+ kcat + '*'+E+'*'+S[0]+'/('+Km+' + '+S[0]+')'
     
@@ -176,7 +181,7 @@ class OrderedBisubstrateBiproduct(Mechanism):
     def writeRate(self) -> str:
         S = self.substrates
         E = self.enzyme[0]
-        kcat,Km1,Km2,K = [p+'_'+self.label for p in self.required_params]
+        kcat,Km1,Km2,K = [p+'_'+self.label for p in self.relevent_params]
 
         return self.label +' = '+kcat+ '*'+E+'*'+(S[0])+'*'+(S[1])+'/(' \
                     +(S[0])+'*'+(S[1])+'+'+Km1+'*'+(S[1])+'+ '+Km2+'*'+(S[0])+'+'+ K+')'
@@ -194,13 +199,14 @@ class MassAction(Mechanism):
         S = self.substrates
         pow = self.stoich
 
-        k, = [p+'_'+self.label if '$' not in p else p.replace('$','_') for p in self.params]
+        k, = [p+'_'+self.label if '$' not in p else p.replace('$','_') for p in self.relevent_params]
 
         allS = '*'.join([s+'^'+c if len(c)>0 else s for s,c in zip(S,pow)])
         allE = '*'.join(self.enzyme)
         if len(allE)>0: allE='*'+allE
+        if len(allS)>0: allS ='*'+allS+allE
 
-        return self.label +' = '+ k+'*'+allS+allE
+        return self.label +' = '+ k+allS
 
 class MonoMassAction(Mechanism): # no superscipt
     name = 'MMA'                                     # name for the mechanism
@@ -215,7 +221,7 @@ class MonoMassAction(Mechanism): # no superscipt
         allE = '*'.join(self.enzyme)
         if len(allE)>0: allE='*'+allE
 
-        k, = [p+'_'+self.label if '$' not in p else p.replace('$','_') for p in self.params]
+        k, = [p+'_'+self.label if '$' not in p else p.replace('$','_') for p in self.relevent_params]
         return self.label + ' = ' + k+'*'+allS+allE
 
 class ConstantRate(Mechanism):
@@ -239,14 +245,13 @@ class simplifiedOBB(Mechanism):
     name = 'SOBB'                                     # name for the mechanism
     required_params = ['kcat', 'Km1', 'Km2']    # list of required parameters
     nS = 2                                           # number of required substrates 
-    nP = 2                                           # number of required products 
     nE = 1                                        # enzymatic reaction
 
     @overrides
     def writeRate(self) -> str:
         S = self.substrates
         E = self.enzyme[0]
-        kcat,Km1,Km2 = [p+'_'+self.label for p in self.required_params]
+        kcat,Km1,Km2 = [p+'_'+self.label for p in self.relevent_params]
 
         return self.label +' = '+ kcat + '*'+E+'*'+(S[0])+'*'+(S[1])+'/(' \
                     +(S[0])+'*'+(S[1])+'+'+Km1+'*'+(S[1])+'+'+Km2+'*'+(S[0])+'+'+Km1+ '*' +Km2+')'

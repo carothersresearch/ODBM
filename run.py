@@ -1,7 +1,7 @@
 import pandas as pd
 import tellurium as te
 from buildModelFromExcel import initializeValues, writeReactions
-from odbm.odbm import ModelBuilder
+from odbm.odbm_base import ModelBuilder
 
 #file_path = input('File path to model definition (excel format):')
 

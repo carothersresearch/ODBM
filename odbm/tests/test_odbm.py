@@ -1,7 +1,7 @@
 """Unit tests for ODBM module"""
 import unittest
 import numpy as np
-from odbm.odbm import *
+from odbm.odbm_base import *
 import itertools
 
 class Test_ModelBuilder(unittest.TestCase):

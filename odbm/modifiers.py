@@ -1,5 +1,5 @@
 from overrides import overrides, final
-from odbm.odbm_base import Mechanism
+from odbm.odbm_main import Mechanism
 import numpy as np
 import re
 

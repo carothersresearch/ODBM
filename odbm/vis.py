@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy as np
 import tellurium as te
-from odbm.odbm_base import ModelBuilder
+from odbm.odbm_main import ModelBuilder
 import matplotlib.pyplot as plt
 
 def rxn_plot(model:ModelBuilder, sim, rxn_idx, figsize = None, titles = None):
@@ -60,7 +60,7 @@ def rxn_plot(model:ModelBuilder, sim, rxn_idx, figsize = None, titles = None):
 
 def species_plot(model:ModelBuilder, sim, species, figsize = None, colors = None, markers = None, linestyles = None):
     """
-    Plots the specified speces concentrations over time 
+    Plots the specified species concentrations over time 
 
     Parameters
     ----------

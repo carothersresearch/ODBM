@@ -1,52 +1,54 @@
 from tkinter import *
 from os.path import exists
-# issue with import statement - odbm is not a package?
-from odbm import *
-# I think maybe moving things into classes would make more sense here
-
-# 2nd Window
-def modelWindow():
-    # close old window (not defined here?)
-    frame.destroy()
-    # Open new window
-    root = Tk()
-    frame = Frame(root)
-    frame.pack()
-
-    cancel_button = Button(frame, text="Cancel", fg="blue") # need a command to restart/reinitialize main window
-    simulate_button = Button(frame, text = 'Simulate Model', fg = 'blue') # need a command to open simulate window
-    edit_button = Button(frame, text = 'Edit Model', fg = 'blue') # need a command to open edit window
+import pandas as pd
+from odbm_main import ModelBuilder, ModelHandler
+from odbm.utils import extractParams, fmt
 
 
-# Checks if model path given by user exists and builds model.
-def loadModel(entry):
-    global myModel #create global variable so it is accessible in main
-    model_path = entry.get()
-    if exists(model_path) and model_path.endswith('.xls','.xlsx'):
-        model_species = pd.read_excel(model_path, sheet_name = 'Species & Base Mechanisms', engine = 'openpyxl').dropna('index','all')
-        model_rxns = pd.read_excel(model_path, sheet_name = 'Reaction', engine = 'openpyxl').dropna('index','all')
-        myModel = ModelBuilder(model_species, model_rxns)
-        modelWindow(myModel)
-    else:
-        if exists(model_path):
-            raise('Please pass in an excel compatible workbook with sheets named "Species & Base Mechanisms" and "Reaction"')
+# Main Window - load model
+class MainWindow:
+    def __init__(self,master):
+        self.master = master
+        self.welcome = Label(master, text = "Welcome to ODBM \n Please insert file path for model to load:")
+        self.welcome.config(font = ('Arial', 12))
+
+        self.entry = Entry(master)
+        self.loadbutton = Button(master, text="Load Model", fg="blue", command = self.loadModel(self.entry))
+
+        self.welcome.pack()
+        self.loadbutton.pack(side = BOTTOM)
+        self.entry.pack()
+
+
+    # Checks if model path given by user exists and builds model.
+    def loadModel(model_path,root):
+        global myModel #create global variable so it is accessible in main
+        if exists(model_path) and model_path.endswith(('.xls','.xlsx')):
+            model_species = pd.read_excel(model_path, sheet_name = 'Species & Base Mechanisms', engine = 'openpyxl').dropna('index','all')
+            model_rxns = pd.read_excel(model_path, sheet_name = 'Reaction', engine = 'openpyxl').dropna('index','all')
+            myModel = ModelBuilder(model_species, model_rxns)
+            print('Model successfully built')
+            modelWindow(myModel, model_path, root)
+
         else:
-            raise('Error: No file exists with given name.')
+            if exists(model_path):
+                raise TypeError('Please pass in an excel compatible workbook with sheets named "Species & Base Mechanisms" and "Reaction"')
+            else:
+                raise FileExistsError('Error: No file exists with given name.')
 
+# Model Window - back, simulate, or edit
+class ModelWindow:
+    def __init__(self,master):
+        return
+# Simulation Window - set simulation parameters, run simulation, save and visualize output
+class SimulationWindow:
+    def __init__(self,master):
+        return
+# Edit Window - set boundary species, add event, run sensitivity analysis and visualize output
+class EditWindow:
+    def __init__(self,master):
+        return
 
-
-# Main Window
 root = Tk()
-frame = Frame(root)
-frame.pack()
-
-welcome = Label(frame, text = "Welcome to ODBM \n Please insert file path for model to load:")
-welcome.config(font = ('Arial', 12))
-entry = Entry(frame)
-loadbutton = Button(frame, text="Load Model", fg="blue", command = loadModel(entry))
-
-welcome.pack()
-loadbutton.pack(side = BOTTOM)
-entry.pack()
+main_window = MainWindow(root)
 root.mainloop()
-

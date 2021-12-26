@@ -1,0 +1,27 @@
+# Initialize concentrations 
+A=5; 
+B=10; 
+C=1; 
+
+# Initialize parameters 
+k_R1=10; 
+
+k_R2=.1; 
+
+k_R3=2; 
+
+k_R4=.5; 
+
+# Define specified reactions 
+
+R1 : A + B -> C; 
+R1 = k_R1*A*B; 
+
+R2 : C -> A + B; 
+R2 = k_R2*C; 
+
+R3 : B -> ; 
+R3 = k_R3*B; 
+
+R4 : B -> 2A; 
+R4 = k_R4*B; 

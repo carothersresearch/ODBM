@@ -13,7 +13,7 @@ DEFAULT_MECHANISMS = [  MichaelisMenten, OrderedBisubstrateBiproduct, MassAction
 
 class ModelBuilder:
     """
-    A class used to keep species and reaction information and compile them into an Antamony model
+    A class used to keep species and reaction information and compile them into an Antaimony model
 
     Attributes
     ----------

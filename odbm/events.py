@@ -1,6 +1,6 @@
 import roadrunner as rr
 
-def addEvents(model, label, event, trigger):
+def addEvent(model, label, event, trigger):
     '''
 
     event can be a list of events 
@@ -20,7 +20,7 @@ def addEvents(model, label, event, trigger):
         model.addEvent(labels[idx], False, trigger, False)
         model.addEventAssignment(eid = labels[idx], vid = var, formula = form, forceRegenerate = False)
 
-def removeEvents(model, labels):
+def removeEvent(model, label):
     labels = label.replace(' ','').split(',')
     for id in labels:
         model.removeEvent(id, False)

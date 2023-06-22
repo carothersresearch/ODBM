@@ -347,10 +347,11 @@ class ModelBuilder:
 class ModelHandler:
     def __init__(self, model) -> None:
         self.model = model
-        self.rr = te.loada(model)
         self.ParameterScan = {}
         self.SimParams = {}
+        self._updateModel(model)
     
+<<<<<<< Updated upstream:odbm/odbm_main.py
     def setConstantParams(self, parameters_dict: dict):
         if np.all([p in self.rr.getGlobalParameterIds()+
                             self.rr.getDependentFloatingSpeciesIds()+
@@ -359,6 +360,18 @@ class ModelHandler:
             self.ConstantParams = parameters_dict
         else:
             raise Exception('No parameter found')
+=======
+    def _updateModel(self, model):
+        self.rr = te.loada(model)
+
+        try: 
+            self.setParameterScan(self.ParameterScan)
+
+        except Exception as e:
+            print('Could not set old parameter scan for new model\n')
+            print(e)
+            self.newModel_flag = True
+>>>>>>> Stashed changes:odbm/odbm.py
 
     def setParameterScan(self, parameters_dict: dict):
         if np.all([p in self.rr.getGlobalParameterIds()+
@@ -367,10 +380,20 @@ class ModelHandler:
 
             if np.all([iter(v) for v in parameters_dict.values()]):
                 self.ParameterScan = parameters_dict
+                self.newModel_flag = False
+
             else:
                 raise Exception('Not iterable')
         else:
             raise Exception('No parameter found')
+        
+
+    def setBoundarySpecies(self, species_dict):
+        # needs to re-load the model!
+        for old_s, new_s in species_dict.items():
+            self.model = self.model.replace(old_s, new_s, 1)
+
+        self._updateModel(self.model)
 
     def setSimParams(self,start,end,points,selections):
         self.SimParams['start'] = start
@@ -382,8 +405,11 @@ class ModelHandler:
         if not self.SimParams:
             print('Need to specify simulation parameters')
             return
+        if self.newModel_flag:
+            print('A new model was loaded, no parameter scan has been specified')
+            return
 
-        self.conditions = np.array(list(self.ParameterScan.values())).T # list(itertools.product(*self.ParameterScan.values()))
+        self.conditions = np.array(list(self.ParameterScan.values())).T
         parameters = self.ParameterScan.keys()
         results = [None]*len(self.conditions)
 
@@ -401,12 +427,21 @@ class ModelHandler:
 
             try:
                 sol = self.rr.simulate(self.SimParams['start'],self.SimParams['end'],self.SimParams['points'],self.SimParams['selections'])
+<<<<<<< Updated upstream:odbm/odbm_main.py
                 for j,m in enumerate(metrics):
                     results_metrics[k,j] = m(sol)
 
                 results[k] = sol
             except:
                 pass
+=======
+                for j,m in enumerate(metrics):  # compare efficiency to stacking results and doing vector
+                    results_metrics[k,j] = m(sol)
+
+                results[k] = sol
+            except Exception as e:
+                print(e)
+>>>>>>> Stashed changes:odbm/odbm.py
 
         if metrics:
             return results, results_metrics

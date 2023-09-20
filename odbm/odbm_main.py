@@ -351,16 +351,6 @@ class ModelHandler:
         self.SimParams = {}
         self._updateModel(model)
     
-<<<<<<< Updated upstream:odbm/odbm_main.py
-    def setConstantParams(self, parameters_dict: dict):
-        if np.all([p in self.rr.getGlobalParameterIds()+
-                            self.rr.getDependentFloatingSpeciesIds()+
-                                self.rr.getIndependentFloatingSpeciesIds() for p in parameters_dict.keys()]):
-
-            self.ConstantParams = parameters_dict
-        else:
-            raise Exception('No parameter found')
-=======
     def _updateModel(self, model):
         self.rr = te.loada(model)
 
@@ -371,7 +361,6 @@ class ModelHandler:
             print('Could not set old parameter scan for new model\n')
             print(e)
             self.newModel_flag = True
->>>>>>> Stashed changes:odbm/odbm.py
 
     def setParameterScan(self, parameters_dict: dict):
         if np.all([p in self.rr.getGlobalParameterIds()+
@@ -427,21 +416,12 @@ class ModelHandler:
 
             try:
                 sol = self.rr.simulate(self.SimParams['start'],self.SimParams['end'],self.SimParams['points'],self.SimParams['selections'])
-<<<<<<< Updated upstream:odbm/odbm_main.py
-                for j,m in enumerate(metrics):
-                    results_metrics[k,j] = m(sol)
-
-                results[k] = sol
-            except:
-                pass
-=======
                 for j,m in enumerate(metrics):  # compare efficiency to stacking results and doing vector
                     results_metrics[k,j] = m(sol)
 
                 results[k] = sol
             except Exception as e:
                 print(e)
->>>>>>> Stashed changes:odbm/odbm.py
 
         if metrics:
             return results, results_metrics
